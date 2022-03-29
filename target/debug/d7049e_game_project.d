@@ -1,0 +1,1 @@
+C:\Users\joska\Desktop\D7049E\D7049E\first_rust_project\d7049e_game_project\target\debug\d7049e_game_project.exe: C:\Users\joska\Desktop\D7049E\D7049E\first_rust_project\d7049e_game_project\src\main.rs
