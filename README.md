@@ -9,7 +9,7 @@ Rust bla bla bla
 **3d Physics:** rapier3d
 
 # License
-Link to license
+[Link to license](https://github.com/Cloud327/D7049E/blob/main/LICENSE.md)
 
 # Our team
 **[Emma](https://github.com/emmeth99):** emacar-8@student.ltu.se  
