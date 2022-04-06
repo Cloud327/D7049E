@@ -1,5 +1,5 @@
 # Game Idea - Tower Defense
-Tower Defense game bla bla bla
+This project is part of the course Virtual interactive environments (course code D7049E), Luleå University of Technology. The aim of this project is to design a game engine and test it using a game. We have chosen to implement a Tower Defense type game to test our game engine.
 
 # Language - Rust
 Rust bla bla bla
