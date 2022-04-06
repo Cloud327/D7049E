@@ -11,4 +11,9 @@ Rust bla bla bla
 # Licence
 Link to licence
 
+# Our team
+**[Emma](https://github.com/emmeth99):** emacar-8@student.ltu.se  
+**[Roman](https://github.com/Cloud327):** romerm-8@student.ltu.se     
+**[Oskar](https://github.com/tomatis55):** oskkar-8@student.ltu.se   
+
 
