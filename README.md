@@ -8,8 +8,8 @@ Rust bla bla bla
 **3d Graphics:** rust_3d    
 **3d Physics:** rapier3d
 
-# Licence
-Link to licence
+# License
+Link to license
 
 # Our team
 **[Emma](https://github.com/emmeth99):** emacar-8@student.ltu.se  
