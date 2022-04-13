@@ -2,7 +2,16 @@
 name = "d7049e_game_project"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bytemuck = "1"
+ogl33 = { version = "0.2.0", features = ["debug_error_checks"]}
+rust-3d = "0.34.0"
+ultraviolet = "0.7"
+beryllium = "0.2.0-alpha.4"
+imagine = "0.0.5"
+[dev-dependencies]
+
