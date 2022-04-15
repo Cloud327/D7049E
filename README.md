@@ -6,7 +6,7 @@ We have chosen to use Rust when coding our game engine. This is because it offer
 
 # Libraries
 **3d Graphics:** rust_3d    
-**3d Physics:** rapier3d
+**3d Physics:** rapier3d    
 **3d Render Engine:** kiss3d
 
 # License
