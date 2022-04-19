@@ -6,3 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rust-3d = "0.34.0"
+kiss3d = "0.32"
+nalgebra     = "0.30"
