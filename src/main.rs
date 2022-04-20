@@ -1,5 +1,5 @@
 use kiss3d::nalgebra as na;
-
+mod ECS;
 use kiss3d::light::Light;
 use kiss3d::resource::Mesh;
 use kiss3d::window::Window;
@@ -26,7 +26,7 @@ fn main() {
 
     //let rot = UnitQuaternion::from_axis_angle(&Vector3::y_axis(), 0.014);
 
-
+    ECS::test::helloWorld();
     while window.render() {
         
        //c;
