@@ -4,7 +4,7 @@ mod assetTest;
 mod ECS;
 
 use ECS::gameObject;
-use ECS::{healthComponent, moveComponent};
+use ECS::{healthComponent, moveComponent, attackComponent};
 
 
 fn main() {
@@ -14,4 +14,6 @@ fn main() {
     healthComponent::test();
     println!("-----");
     moveComponent::test();
+    println!("-----");
+    attackComponent::test();
 }
