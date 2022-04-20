@@ -1,4 +1,4 @@
-use super::gameObject::Update;
+use super::gameObject::BaseComponent;
 
 struct AttackComponent{
     attackRate: i32,
@@ -23,7 +23,7 @@ impl AttackComponent{
     }
 }
 
-impl Update for AttackComponent{
+impl BaseComponent for AttackComponent{
     fn update(&self) {
         
     }

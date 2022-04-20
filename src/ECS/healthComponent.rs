@@ -1,7 +1,8 @@
-use super::gameObject::Update;
+use super::gameObject::BaseComponent;
+use std::convert::From;
 
-struct HealthComponent{
-    health: i32,
+pub struct HealthComponent{
+    pub health: i32,
 }
 
 impl HealthComponent{
@@ -18,7 +19,8 @@ impl HealthComponent{
     }
 }
 
-impl Update for HealthComponent{
+
+impl BaseComponent for HealthComponent{
     fn update(&self){
 
     }

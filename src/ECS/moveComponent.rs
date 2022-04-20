@@ -1,4 +1,4 @@
-use super::gameObject::Update;
+use super::gameObject::BaseComponent;
 
 struct MoveComponent{
     speed: i32,
@@ -14,7 +14,7 @@ impl MoveComponent{
     }
 }
 
-impl Update for MoveComponent{
+impl BaseComponent for MoveComponent{
     fn update(&self) {
         
     }
