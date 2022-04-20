@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 rust-3d = "0.34.0"
-kiss3d = "0.32"
-nalgebra     = "0.30"
+kiss3d = "0.34.0"
+nalgebra = "0.30"
