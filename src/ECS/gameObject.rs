@@ -2,7 +2,7 @@
 
 pub struct GameObject{
     
-    pub components: vec<Box<dyn Update>>,
+    pub components: Vec<Box<dyn Update>>,
 }
 
 impl GameObject {
@@ -17,6 +17,6 @@ impl GameObject {
 
 
 pub trait Update {
-    pub fn update(&self);
+    fn update(&self);
     
 }
