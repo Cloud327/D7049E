@@ -1,24 +1,24 @@
 use super::gameObject::BaseComponent;
 
 struct AttackComponent{
-    attackRate: i32,
-    attackDamage: i32,
+    attackRate: usize,
+    attackDamage: usize,
 }
 
 impl AttackComponent{
-    pub fn getAttackRate(&self) -> i32{
+    pub fn getAttackRate(&self) -> usize{
         return self.attackRate;
     }
 
-    pub fn getAttackDamage(&self) -> i32{
+    pub fn getAttackDamage(&self) -> usize{
         return self.attackDamage;
     }
 
-    pub fn setAttackRate(&mut self, attackRate: i32){
+    pub fn setAttackRate(&mut self, attackRate: usize){
         self.attackRate = attackRate;
     }
 
-    pub fn setAttackDamage(&mut self, attackDamage: i32){
+    pub fn setAttackDamage(&mut self, attackDamage: usize){
         self.attackDamage = attackDamage;
     }
 }

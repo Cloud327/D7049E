@@ -2,19 +2,19 @@ use super::gameObject::BaseComponent;
 use std::convert::From;
 
 pub struct HealthComponent{
-    pub health: i32,
+    pub health: usize,
 }
 
 impl HealthComponent{
-    pub fn increaseHealth(&mut self, value:i32){
+    pub fn increaseHealth(&mut self, value:usize){
         self.health += value;
     }
 
-    pub fn decreaseHealth(&mut self, value:i32){
+    pub fn decreaseHealth(&mut self, value:usize){
         self.health -= value;
     }
 
-    pub fn getHealth (&mut self) -> i32{
+    pub fn getHealth (&mut self) -> usize{
         return self.health;
     }
 }

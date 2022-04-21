@@ -1,15 +1,15 @@
 use super::gameObject::BaseComponent;
 
 struct MoveComponent{
-    speed: i32,
+    speed: usize,
 }
 
 impl MoveComponent{
-    pub fn getSpeed(&self) -> i32{
+    pub fn getSpeed(&self) -> usize{
         return self.speed;
     }
 
-    pub fn setSpeed(&mut self, speed:i32){
+    pub fn setSpeed(&mut self, speed:usize){
         self.speed = speed;
     }
 }
