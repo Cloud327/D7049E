@@ -1,2 +1,4 @@
 pub mod test;
-mod gameObject;
+pub mod gameObject;
+pub mod transformComponent;
+pub mod healthComponent;
