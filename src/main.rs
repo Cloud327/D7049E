@@ -5,6 +5,7 @@ mod ECS;
 
 use ECS::{gameObject, healthComponent, moveComponent, attackComponent};
 use rust_3d::io::Header;
+use crate::ECS::componentEnum::ComponentEnum;
 use crate::ECS::componentManager::{self, ComponentManager};
 use crate::ECS::gameObject::{BaseComponent, GameObject};
 use crate::ECS::healthComponent::HealthComponent;
@@ -21,9 +22,8 @@ fn main() {
     let mut go = GameObject{componentIndices:Vec::new()};
     go.createHealthComponent(&mut componentManager, HealthComponent{health:65});
 
-    let index = go.getComponentIndex("HealthComponent".to_string());
-
-    let comp = go.getHealthComponent(componentManager, index.unwrap());
+    let comp = go.getComponent(componentManager, "HealthComponent".to_string()).unwrap();
+    let hpComp = ;
     println!("{}", comp.health);
 
 

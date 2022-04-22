@@ -23,7 +23,7 @@ impl GameObject {
     }
 
     // -> Option<usize>
-    pub fn getComponentIndex(&self, s: String) -> Option<usize>{
+    fn getComponentIndex(&self, s: String) -> Option<usize>{
         for tup in self.componentIndices.iter() {
             if tup.0 == s {
                 return Some(tup.1);
@@ -47,15 +47,15 @@ impl GameObject {
     pub fn getComponent(&self, compManager:ComponentManager, componentType: String) -> Option<ComponentEnum>{
         let index = self.getComponentIndex(componentType).unwrap();
         if componentType == "HealthComponent".to_string(){
-            return Some(ComponentEnum::healthComponent(self.getHealthComponent(compManager, index)));
+            return Some(ComponentEnum::healthComponent(*self.getHealthComponent(compManager, index).unwrap()));
         }
         else{
             return None;
         }
     }
 
-    pub fn getHealthComponent(&self, compManager:ComponentManager,index: usize) -> &HealthComponent{
-        return &compManager.healthComponents[index];
+    fn getHealthComponent(&self, compManager:ComponentManager,index: usize) -> Option<&HealthComponent>{
+        return compManager.healthComponents.get(index);
     }
 
     
