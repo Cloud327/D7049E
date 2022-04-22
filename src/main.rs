@@ -19,11 +19,11 @@ fn main() {
     let mut componentManager = ComponentManager{healthComponents:Vec::new(), healthFreeList:Vec::new()};
 
     let mut go = GameObject{componentIndices:Vec::new()};
-    componentManager.createHealthComponent(&mut go, HealthComponent{health:65});
+    go.createHealthComponent(&mut componentManager, HealthComponent{health:65});
 
     let index = go.getComponentIndex("HealthComponent".to_string());
-    
-    let comp = componentManager.getHealthComponent(index.unwrap());
+
+    let comp = go.getHealthComponent(componentManager, index.unwrap());
     println!("{}", comp.health);
 
 

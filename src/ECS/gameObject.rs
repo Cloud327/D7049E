@@ -1,3 +1,5 @@
+use super::{componentManager::ComponentManager, healthComponent::HealthComponent, componentEnum::ComponentEnum};
+
 
 
 pub trait BaseComponent {
@@ -22,20 +24,39 @@ impl GameObject {
 
     // -> Option<usize>
     pub fn getComponentIndex(&self, s: String) -> Option<usize>{
-        //for component in self.components.iter(){
-        //    if(component.as_ref().id == id){
-        //        return component;
-        //    }
-        //}
-        //return self.components[0];
-
         for tup in self.componentIndices.iter() {
             if tup.0 == s {
                 return Some(tup.1);
             }
         }
         return None;
-        
-
     }
+
+    pub fn createHealthComponent(&mut self, &mut compManager: &mut ComponentManager, healthComponent: HealthComponent){
+        if compManager.healthFreeList.is_empty(){
+            compManager.healthComponents.push(healthComponent);
+            self.createComponent("HealthComponent".to_string(), compManager.healthComponents.len()-1);
+        }
+        else{
+            let index = *compManager.healthFreeList.first().unwrap();
+            compManager.healthComponents.insert(index, healthComponent);
+            self.createComponent("HealthComponent".to_string(), index);
+        }
+    }
+
+    pub fn getComponent(&self, compManager:ComponentManager, componentType: String) -> Option<ComponentEnum>{
+        let index = self.getComponentIndex(componentType).unwrap();
+        if componentType == "HealthComponent".to_string(){
+            return Some(ComponentEnum::healthComponent(self.getHealthComponent(compManager, index)));
+        }
+        else{
+            return None;
+        }
+    }
+
+    pub fn getHealthComponent(&self, compManager:ComponentManager,index: usize) -> &HealthComponent{
+        return &compManager.healthComponents[index];
+    }
+
+    
 }
