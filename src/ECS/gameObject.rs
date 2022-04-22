@@ -2,14 +2,12 @@
 
 pub trait BaseComponent {
     fn update(&self);
-
-    //fn getComponent(&self);
     
 }
 
 pub struct GameObject{
 
-    pub components: Vec<(String, Box::<dyn BaseComponent>)>,
+    pub componentIndices: Vec<(String, usize)>,
 
 }
 
@@ -18,8 +16,12 @@ impl GameObject {
         
     }
 
+    pub fn createComponent(&mut self, componentType:String, index:usize){
+        self.componentIndices.push((componentType, index))
+    }
+
     // -> Option<usize>
-    pub fn getComponent(&self, s: String) -> Option<&Box<(dyn BaseComponent + 'static)>>{
+    pub fn getComponentIndex(&self, s: String) -> Option<usize>{
         //for component in self.components.iter(){
         //    if(component.as_ref().id == id){
         //        return component;
@@ -27,14 +29,13 @@ impl GameObject {
         //}
         //return self.components[0];
 
-        for c in self.components.iter() {
-            if c.0 == s {
-                return Some(&c.1);
+        for tup in self.componentIndices.iter() {
+            if tup.0 == s {
+                return Some(tup.1);
             }
         }
         return None;
         
-
 
     }
 }

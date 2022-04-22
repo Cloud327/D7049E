@@ -4,33 +4,32 @@ mod assetTest;
 mod ECS;
 
 use ECS::{gameObject, healthComponent, moveComponent, attackComponent};
-use std::collections::HashMap;
-use std::boxed::Box;
-
+use rust_3d::io::Header;
+use crate::ECS::componentManager::{self, ComponentManager};
 use crate::ECS::gameObject::{BaseComponent, GameObject};
 use crate::ECS::healthComponent::HealthComponent;
-use std::any::Any;
-use downcast_rs::Downcast;
+use crate::ECS::manager::Manager;
+
 
 
 fn main() {
     println!("Hello, world!");
 
-    let healthComponent = HealthComponent{health:65};
+    let mut manager = Manager{objects:Vec::new()};
+    let mut componentManager = ComponentManager{healthComponents:Vec::new(), healthFreeList:Vec::new()};
 
+    let mut go = GameObject{componentIndices:Vec::new()};
+    componentManager.createHealthComponent(&mut go, HealthComponent{health:65});
 
-    let go = GameObject{components:vec![("HealthComponent".to_string(), Box::new(healthComponent))]};
-
-
-    let resObj = go.getComponent("HealthComponent".to_string());
-    let resObj = resObj.unwrap();
-
-    let resObj = resObj.as_any().downcast_ref::<HealthComponent>();
+    let index = go.getComponentIndex("HealthComponent".to_string());
     
-    println!("{}", resObj.unwrap().health);
+    let comp = componentManager.getHealthComponent(index.unwrap());
+    println!("{}", comp.health);
+
 
     //gameObject::main();
     //assetTest::test();
+    println!("-----");
     healthComponent::test();
     println!("-----");
     moveComponent::test();

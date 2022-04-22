@@ -1,6 +1,6 @@
 use super::gameObject::BaseComponent;
 
-struct MoveComponent{
+pub struct MoveComponent{
     speed: usize,
 }
 
