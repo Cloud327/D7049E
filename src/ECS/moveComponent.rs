@@ -5,6 +5,11 @@ pub struct MoveComponent{
 }
 
 impl MoveComponent{
+    pub fn new(spd: usize) -> Self {
+        Self {
+            speed: spd,
+        }
+    }
     pub fn getSpeed(&self) -> usize{
         return self.speed;
     }

@@ -5,3 +5,4 @@ pub mod attackComponent;
 pub mod manager;
 pub mod componentEnum;
 pub mod componentManager;
+pub mod componentVec;

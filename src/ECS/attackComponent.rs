@@ -1,11 +1,17 @@
 use super::gameObject::BaseComponent;
 
-struct AttackComponent{
+pub struct AttackComponent{
     attackRate: usize,
     attackDamage: usize,
 }
 
 impl AttackComponent{
+    pub fn new(atkRate: usize,atkDamage: usize) -> Self {
+        Self{
+            attackRate: atkRate,
+            attackDamage: atkDamage,
+        }
+    }
     pub fn getAttackRate(&self) -> usize{
         return self.attackRate;
     }

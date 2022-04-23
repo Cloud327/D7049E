@@ -1,11 +1,15 @@
 use super::gameObject::BaseComponent;
-use std::convert::From;
 
 pub struct HealthComponent{
     pub health: usize,
 }
 
 impl HealthComponent{
+    pub fn new(health: usize) -> Self{
+        Self {
+            health: health
+        }
+    }
     pub fn increaseHealth(&mut self, value:usize){
         self.health += value;
     }
