@@ -50,7 +50,13 @@ fn main() {
         }
     }
 
-
+    // or all who have an attackComponent
+    let mut attackComps = manager.borrowComponentVecMut::<AttackComponent>().unwrap();
+    let zip = attackComps.iter_mut();
+    let iter = zip.filter_map(|attack| Some(attack.as_mut()?));
+    for attack in iter{
+        println!("someone has an attack rate of {}", attack.getAttackRate())
+    }
 
 
 
