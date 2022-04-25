@@ -4,13 +4,15 @@
 mod assetTest;
 mod ECS;
 
+use ECS::attackRateComponent::AttackRateComponent;
+
 // use ECS::{healthComponent, moveComponent, attackComponent};
 // use rust_3d::io::Header;
 // use crate::ECS::componentEnum::{ComponentEnum, self};
 // use crate::ECS::componentManager::{self, ComponentManager};
 // use crate::ECS::gameObject::{BaseComponent, GameObject};
 // use crate::ECS::healthComponent::HealthComponent;
-use crate::ECS::{manager::Manager, healthComponent::HealthComponent, moveComponent::MoveComponent,attackComponent::AttackComponent};
+use crate::ECS::{manager::Manager, healthComponent::HealthComponent, moveComponent::MoveComponent,attackDamageComponent::AttackDamageComponent};
 
 // mod test;
 
@@ -29,10 +31,10 @@ fn main() {
     manager.addComponentToObject(stationaryEnemy, HealthComponent{health:0});
 
     let redTower = manager.newObject();
-    manager.addComponentToObject(redTower, AttackComponent::new(15,2));
+    manager.addComponentToObject(redTower, AttackDamageComponent::new(15));
 
     let blueTower = manager.newObject();
-    manager.addComponentToObject(blueTower, AttackComponent::new(30,3));
+    manager.addComponentToObject(blueTower, AttackRateComponent::new(3));
 
 
 
@@ -46,16 +48,16 @@ fn main() {
         if health.getHealth() <= 0 {
             println!("someone dead has a speed of {}", movement.getSpeed())
         } else {
-            println!("someone who has a speed of {} lives!", movement.getSpeed())
+            println!("someone who has a speed of {} is alive!", movement.getSpeed())
         }
     }
 
     // or all who have an attackComponent
-    let mut attackComps = manager.borrowComponentVecMut::<AttackComponent>().unwrap();
+    let mut attackComps = manager.borrowComponentVecMut::<AttackDamageComponent>().unwrap();
     let zip = attackComps.iter_mut();
     let iter = zip.filter_map(|attack| Some(attack.as_mut()?));
     for attack in iter{
-        println!("someone has an attack rate of {}", attack.getAttackRate())
+        println!("someone has an attack damage of {}", attack.getAttackDamage())
     }
 
 

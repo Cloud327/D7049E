@@ -24,8 +24,6 @@ impl GameObject {
 
 
 
-
-
 // <-- part of comment
 
     // pub fn createComponent(&mut self, componentType:String, index:usize){

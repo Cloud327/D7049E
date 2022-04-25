@@ -1,7 +1,8 @@
 pub mod gameObject;
 pub mod healthComponent;
 pub mod moveComponent;
-pub mod attackComponent;
+pub mod attackDamageComponent;
+pub mod attackRateComponent;
 pub mod manager;
 pub mod componentEnum;
 pub mod componentManager;

@@ -85,7 +85,6 @@ impl Manager{
         None // If we fail to find a matching ComponentVec we simply return None.
     }
     
-    
 }
 
 
