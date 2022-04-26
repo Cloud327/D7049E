@@ -3,7 +3,7 @@
 
 mod assetTest;
 mod ECS;
-
+use ECS::eventManager;
 use ECS::attackRateComponent::AttackRateComponent;
 
 // use ECS::{healthComponent, moveComponent, attackComponent};
@@ -12,12 +12,15 @@ use ECS::attackRateComponent::AttackRateComponent;
 // use crate::ECS::componentManager::{self, ComponentManager};
 // use crate::ECS::gameObject::{BaseComponent, GameObject};
 // use crate::ECS::healthComponent::HealthComponent;
-use crate::ECS::{manager::Manager, healthComponent::HealthComponent, moveComponent::MoveComponent,attackDamageComponent::AttackDamageComponent};
+use crate::ECS::{manager::Manager, healthComponent::HealthComponent, moveComponent::MoveComponent,attackDamageComponent::AttackDamageComponent, eventManager::EventManager};
 
 // mod test;
 
 fn main() {
-    let mut manager = Manager::new();
+
+    eventManager::test();
+
+/*     let mut manager = Manager::new();
 
     let redEnemy = manager.newObject();
     manager.addComponentToObject(redEnemy, HealthComponent{health:65});
@@ -60,7 +63,7 @@ fn main() {
         println!("someone has an attack damage of {}", attack.getAttackDamage())
     }
 
-
+ */
 
     // test::main();
 
