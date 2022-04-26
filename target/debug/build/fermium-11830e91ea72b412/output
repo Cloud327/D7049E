@@ -1,9 +1,0 @@
-use_bindgen_bin: false
-link_dynamic: true
-link_static: false
-bind_SDL2_2_0_9: false
-bind_SDL2_2_0_10: false
-cargo:rustc-env=TARGET=x86_64-pc-windows-msvc
-cargo:rustc-env=BIND_PATCH_LEVEL=8
-cargo:rustc-link-lib=SDL2
-cargo:rustc-link-search=native=C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\fermium-0.1.4\win32-devel-files\VC\lib\x64

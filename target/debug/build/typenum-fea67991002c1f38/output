@@ -1,0 +1,2 @@
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=D:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\build\typenum-fea67991002c1f38\out\consts.rs
+cargo:rustc-env=TYPENUM_BUILD_OP=D:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\build\typenum-fea67991002c1f38\out\op.rs

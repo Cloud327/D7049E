@@ -377,6 +377,7 @@ name = "d7049e_game_project"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "downcast-rs",
  "kiss3d",
  "nalgebra",
  "ogl33",

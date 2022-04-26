@@ -1,19 +1,16 @@
+use super::{componentManager::ComponentManager, healthComponent::HealthComponent, componentEnum::ComponentEnum};
+
 
 
 pub trait BaseComponent {
     fn update(&self);
-
-    fn getComponent(&self);
     
 }
-
+#[derive(Clone)]
 pub struct GameObject{
-    
 
+    pub componentIndices: Vec<(String, usize)>,
 
-    pub components: Vec<(&'static str, Box::<dyn BaseComponent>)>,
-    //pub componentIndex: Vec<(&'static str, usize)>
-    //pub components: Vec<(&'static str, usize)>,
 }
 
 impl GameObject {
@@ -21,31 +18,47 @@ impl GameObject {
         
     }
 
-    // -> Option<usize>
-    pub fn getComponent(&self, s: &str) -> Option<Box<(dyn BaseComponent + 'static)>>{
-        //for component in self.components.iter(){
-        //    if(component.as_ref().id == id){
-        //        return component;
-        //    }
-        //}
-        //return self.components[0];
+    pub fn createComponent(&mut self, componentType:String, index:usize){
+        self.componentIndices.push((componentType, index))
+    }
 
-        for c in self.components.iter() {
-            if c.0 == s {
-                return Some(c.1);
+    // -> Option<usize>
+    pub fn getComponentIndex(&self, s: String) -> Option<usize>{
+        for tup in self.componentIndices.iter() {
+            if tup.0 == s {
+                return Some(tup.1);
             }
         }
         return None;
-        
-
-        /*for component in self.components.iter() {
-            if component.0 == s {
-                return Some(component.1);
-            }
-        }
-        return None*/
-
     }
+
+
+
+    pub fn createHealthComponent(&mut self, mut compManager: &mut ComponentManager, healthComponent: HealthComponent){
+        if compManager.healthFreeList.is_empty(){
+            compManager.healthComponents.push(healthComponent);
+            self.createComponent("HealthComponent".to_string(), compManager.healthComponents.len()-1);
+        }
+        else{
+            let index = *compManager.healthFreeList.first().unwrap();
+            compManager.healthComponents.insert(index, healthComponent);
+            self.createComponent("HealthComponent".to_string(), index);
+        }
+    }
+
+    /*pub fn getComponent(&self, compManager:ComponentManager, componentType: String) -> Option<ComponentEnum>{
+        let index = self.getComponentIndex(componentType).unwrap();
+        if componentType == "HealthComponent".to_string(){
+            return Some(ComponentEnum::healthComponent(*self.getHealthComponent(compManager, index).unwrap()));
+        }
+        else{
+            return None;
+        
+    }}*/
+
+    //fn getHealthComponent(&self, compManager:ComponentManager,index: usize) -> Option<&HealthComponent>{
+        //return compManager.healthComponents.get(index);
+    //}
+
+    
 }
-
-

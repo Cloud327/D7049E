@@ -1,0 +1,14 @@
+d:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\deps\png-7467ef4c48ab1df2.rmeta: C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\lib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\chunk.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\common.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\decoder\mod.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\decoder\stream.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\decoder\zlib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\encoder.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\filter.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\traits.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\utils.rs
+
+d:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\deps\png-7467ef4c48ab1df2.d: C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\lib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\chunk.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\common.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\decoder\mod.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\decoder\stream.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\decoder\zlib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\encoder.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\filter.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\traits.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\utils.rs
+
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\lib.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\chunk.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\common.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\decoder\mod.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\decoder\stream.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\decoder\zlib.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\encoder.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\filter.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\traits.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.16.8\src\utils.rs:

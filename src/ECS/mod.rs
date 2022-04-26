@@ -2,3 +2,8 @@ pub mod test;
 pub mod gameObject;
 pub mod transformComponent;
 pub mod healthComponent;
+pub mod attackComponent;
+pub mod componentManager;
+pub mod componentEnum;
+pub mod manager;
+pub mod moveComponent;
