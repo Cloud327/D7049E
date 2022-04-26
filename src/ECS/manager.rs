@@ -1,4 +1,4 @@
-use super::{componentVec::ComponentVec, gameObject::{self, GameObject}};
+use super::{componentVec::ComponentVec};
 use std::cell::{RefCell, RefMut};
 
 
@@ -6,8 +6,6 @@ pub struct Manager{
     // We'll use `entities_count` to assign each object a unique ID.
     objectCount: usize,
     componentVecs: Vec<Box<dyn ComponentVec>>,
-    objectVec: Vec<GameObject>
-    
 }
 
 impl Manager{
@@ -15,7 +13,6 @@ impl Manager{
         Self {
             objectCount: 0,
             componentVecs: Vec::new(),
-            objectVec: Vec::new(), // do i want this?
         }
     }
     /* 
@@ -27,8 +24,6 @@ impl Manager{
             component_vec.pushNone(); // We call push_none on each component channel because our object will be initialized without any components.
         }
 
-        let go = GameObject::new(object_id);
-        self.objectVec.push(go);
         self.objectCount += 1;
         object_id // And we return object_id so have an index to refer back to later.
     }

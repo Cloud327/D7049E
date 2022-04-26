@@ -1,4 +1,3 @@
-use super::gameObject::BaseComponent;
 
 pub struct AttackRateComponent{
     attackRate: usize,
@@ -10,6 +9,11 @@ impl AttackRateComponent{
             attackRate: atkRate,
         }
     }
+
+    pub fn update(){
+
+    }
+    
     pub fn getAttackRate(&self) -> usize{
         return self.attackRate;
     }
@@ -19,11 +23,6 @@ impl AttackRateComponent{
     }
 }
 
-impl BaseComponent for AttackRateComponent{
-    fn update(&self) {
-        
-    }
-}
 
 pub fn test(){
     let mut attackComponent = AttackRateComponent{attackRate:1};

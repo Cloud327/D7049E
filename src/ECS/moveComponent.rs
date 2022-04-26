@@ -1,4 +1,3 @@
-use super::gameObject::BaseComponent;
 
 pub struct MoveComponent{
     speed: usize,
@@ -10,6 +9,11 @@ impl MoveComponent{
             speed: spd,
         }
     }
+
+    pub fn update(){
+
+    }
+    
     pub fn getSpeed(&self) -> usize{
         return self.speed;
     }
@@ -19,11 +23,7 @@ impl MoveComponent{
     }
 }
 
-impl BaseComponent for MoveComponent{
-    fn update(&self) {
-        
-    }
-}
+
 
 pub fn test(){
     let mut moveComponent = MoveComponent{speed:20};

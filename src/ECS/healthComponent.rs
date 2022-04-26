@@ -1,4 +1,4 @@
-use super::gameObject::BaseComponent;
+
 
 pub struct HealthComponent{
     pub health: usize,
@@ -10,6 +10,11 @@ impl HealthComponent{
             health: health
         }
     }
+
+    pub fn update(){
+
+    }
+    
     pub fn increaseHealth(&mut self, value:usize){
         self.health += value;
     }
@@ -21,14 +26,9 @@ impl HealthComponent{
     pub fn getHealth (&mut self) -> usize{
         return self.health;
     }
+
 }
 
-
-impl BaseComponent for HealthComponent{
-    fn update(&self){
-
-    }
-}
 
 pub fn test(){
     let mut healthComponent = HealthComponent{health:50};
