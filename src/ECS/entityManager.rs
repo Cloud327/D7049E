@@ -2,13 +2,13 @@ use super::{componentVec::ComponentVec};
 use std::cell::{RefCell, RefMut};
 
 
-pub struct Manager{
+pub struct EntityManager{
     // We'll use `entities_count` to assign each object a unique ID.
     objectCount: usize,
     componentVecs: Vec<Box<dyn ComponentVec>>,
 }
 
-impl Manager{
+impl EntityManager{
     pub fn new() -> Self {
         Self {
             objectCount: 0,

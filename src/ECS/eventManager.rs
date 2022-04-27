@@ -1,4 +1,4 @@
-use super::{eventEnum::{EventEnum, self}};
+use super::{eventEnum::{EventEnum}};
 
 
 pub struct EventManager{
@@ -19,7 +19,10 @@ impl EventManager{
     pub fn readEvent(&mut self) -> EventEnum{
         return self.eventBuffer.remove(0)
     }
+
+
 }
+
 
 
 pub fn test(){

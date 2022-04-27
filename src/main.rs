@@ -6,44 +6,38 @@ mod ECS;
 use ECS::eventManager;
 use ECS::attackRateComponent::AttackRateComponent;
 
-// use ECS::{healthComponent, moveComponent, attackComponent};
-// use rust_3d::io::Header;
-// use crate::ECS::componentEnum::{ComponentEnum, self};
-// use crate::ECS::componentManager::{self, ComponentManager};
-// use crate::ECS::gameObject::{BaseComponent, GameObject};
-// use crate::ECS::healthComponent::HealthComponent;
-use crate::ECS::{manager::Manager, healthComponent::HealthComponent, moveComponent::MoveComponent,attackDamageComponent::AttackDamageComponent, eventManager::EventManager};
+use crate::ECS::{entityManager::EntityManager, healthComponent::HealthComponent, moveComponent::MoveComponent,attackDamageComponent::AttackDamageComponent, eventManager::EventManager};
 
 // mod test;
 
 fn main() {
 
     eventManager::test();
+    
+    let mut entManager = EntityManager::new();
 
-/*     let mut manager = Manager::new();
+    let redEnemy = entManager.newObject();
+    entManager.addComponentToObject(redEnemy, HealthComponent{health:65});
+    entManager.addComponentToObject(redEnemy, MoveComponent::new(1));
 
-    let redEnemy = manager.newObject();
-    manager.addComponentToObject(redEnemy, HealthComponent{health:65});
-    manager.addComponentToObject(redEnemy, MoveComponent::new(1));
+    let blueEnemy = entManager.newObject();
+    entManager.addComponentToObject(blueEnemy, HealthComponent{health:0});
+    entManager.addComponentToObject(blueEnemy, MoveComponent::new(2));
 
-    let blueEnemy = manager.newObject();
-    manager.addComponentToObject(blueEnemy, HealthComponent{health:0});
-    manager.addComponentToObject(blueEnemy, MoveComponent::new(2));
+    let stationaryEnemy = entManager.newObject();
+    entManager.addComponentToObject(stationaryEnemy, HealthComponent{health:0});
 
-    let stationaryEnemy = manager.newObject();
-    manager.addComponentToObject(stationaryEnemy, HealthComponent{health:0});
+    let redTower = entManager.newObject();
+    entManager.addComponentToObject(redTower, AttackDamageComponent::new(15));
 
-    let redTower = manager.newObject();
-    manager.addComponentToObject(redTower, AttackDamageComponent::new(15));
-
-    let blueTower = manager.newObject();
-    manager.addComponentToObject(blueTower, AttackRateComponent::new(3));
+    let blueTower = entManager.newObject();
+    entManager.addComponentToObject(blueTower, AttackRateComponent::new(3));
 
 
 
     // example of how to iterate through all objects who have both a health and movecomponent
-    let mut healths = manager.borrowComponentVecMut::<HealthComponent>().unwrap();
-    let mut moves = manager.borrowComponentVecMut::<MoveComponent>().unwrap();
+    let mut healths = entManager.borrowComponentVecMut::<HealthComponent>().unwrap();
+    let mut moves = entManager.borrowComponentVecMut::<MoveComponent>().unwrap();
     let zip = healths.iter_mut().zip(moves.iter_mut());
     let iter = zip.filter_map(|(health, movement)| Some((health.as_mut()?, movement.as_mut()?)));
 
@@ -56,24 +50,24 @@ fn main() {
     }
 
     // or all who have an attackComponent
-    let mut attackComps = manager.borrowComponentVecMut::<AttackDamageComponent>().unwrap();
+    let mut attackComps = entManager.borrowComponentVecMut::<AttackDamageComponent>().unwrap();
     let zip = attackComps.iter_mut();
     let iter = zip.filter_map(|attack| Some(attack.as_mut()?));
     for attack in iter{
         println!("someone has an attack damage of {}", attack.getAttackDamage())
     }
 
- */
+
 
     // test::main();
 
-    // let mut manager = Manager{objects:Vec::new()};
+    // let mut entManager = entManager{objects:Vec::new()};
     // let mut componentManager = ComponentManager{healthComponents:Vec::new(), healthFreeList:Vec::new()};
 
-    // manager.createObject("RedTower".to_string());
+    // entManager.createObject("RedTower".to_string());
 
     // let mut go = GameObject{componentIndices:Vec::new()};
-    // let go = &mut manager.objects[0].1;
+    // let go = &mut entManager.objects[0].1;
 
     // go.createHealthComponent(&mut componentManager,65);
 
