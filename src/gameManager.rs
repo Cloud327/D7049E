@@ -28,16 +28,16 @@ impl GameManager{
         let event = self.eventManager.readEvent();
 
         if let EventEnum::takeDamageEvent{id, damage} = event {
-            let mut healthComp = self.entityManager.borrowComponentVecMut::<HealthComponent>().unwrap();
-            let mut idComp = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
-            let zip = healthComp.iter_mut().zip(idComp.iter_mut());
+            let mut healthCompList = self.entityManager.borrowComponentVecMut::<HealthComponent>().unwrap();
+            let mut idCompList = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
+            let zip = healthCompList.iter_mut().zip(idCompList.iter_mut());
 
-            let iter = zip.filter_map(|(health, idThing)| Some((health.as_mut()?, idThing.as_mut()?)));
-            for (health, idThing) in iter {
-                if idThing.getId() == id {
-                    println!("health {} at id: {}", health.getHealth(), id);
-                    health.decreaseHealth(damage);
-                    println!("health {} at id: {}", health.getHealth(), id);
+            let iter = zip.filter_map(|(healthComp, idComp)| Some((healthComp.as_mut()?, idComp.as_mut()?)));
+            for (healthComp, idComp) in iter {
+                if idComp.getId() == id {
+                    println!("health {} at id: {}", healthComp.getHealth(), id);
+                    healthComp.decreaseHealth(damage);
+                    println!("health {} at id: {}", healthComp.getHealth(), id);
                 } else {
                     println!("No such id");
                 }
@@ -47,14 +47,14 @@ impl GameManager{
         if let EventEnum::towerAttackEvent{x, y} = event {
             // Do attack with all object of type = towers
             // Do attack = create projectile object
-            let mut typeComp = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
-            let mut idComp = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
-            let zip = typeComp.iter_mut().zip(idComp.iter_mut());
+            let mut typeCompList = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
+            let mut idCompList = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
+            let zip = typeCompList.iter_mut().zip(idCompList.iter_mut());
 
-            let iter = zip.filter_map(|(typeThing, idThing)| Some((typeThing.as_mut()?, idThing.as_mut()?)));
-            for (typeThing, idThing) in iter {
-                if matches!(typeThing.getType(), TypeEnum::towerType{}){
-                    println!("found tower at id: {}", idThing.getId());
+            let iter = zip.filter_map(|(typeComp, idComp)| Some((typeComp.as_mut()?, idComp.as_mut()?)));
+            for (typeComp, idComp) in iter {
+                if matches!(typeComp.getType(), TypeEnum::towerType{}){
+                    println!("found tower at id: {}", idComp.getId());
                     // Do attack
                 }
 
