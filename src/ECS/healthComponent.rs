@@ -1,7 +1,7 @@
 
 
 pub struct HealthComponent{
-    pub health: usize,
+    health: usize,
 }
 
 impl HealthComponent{

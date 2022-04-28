@@ -4,9 +4,9 @@ pub struct AttackDamageComponent{
 }
 
 impl AttackDamageComponent{
-    pub fn new(atkDamage: usize) -> Self {
+    pub fn new(attackDamage: usize) -> Self {
         Self{
-            attackDamage: atkDamage,
+            attackDamage: attackDamage,
         }
     }
 
