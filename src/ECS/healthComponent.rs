@@ -20,7 +20,11 @@ impl HealthComponent{
     }
 
     pub fn decreaseHealth(&mut self, value:usize){
-        self.health -= value;
+        if value > self.health{
+            self.health = 0;
+        }else{
+            self.health -= value;
+        }
     }
 
     pub fn getHealth (&mut self) -> usize{

@@ -2,8 +2,9 @@
 
 
 mod assetTest;
+mod gameManager;
 mod ECS;
-use ECS::eventManager;
+use ECS::{eventManager, idComponent::IdComponent};
 use ECS::attackRateComponent::AttackRateComponent;
 
 use crate::ECS::{entityManager::EntityManager, healthComponent::HealthComponent, moveComponent::MoveComponent,attackDamageComponent::AttackDamageComponent, eventManager::EventManager};
@@ -12,13 +13,15 @@ use crate::ECS::{entityManager::EntityManager, healthComponent::HealthComponent,
 
 fn main() {
 
-    eventManager::test();
-    
+    //eventManager::test();
+    gameManager::test();
+    /* 
     let mut entManager = EntityManager::new();
 
     let redEnemy = entManager.newObject();
     entManager.addComponentToObject(redEnemy, HealthComponent{health:65});
     entManager.addComponentToObject(redEnemy, MoveComponent::new(1));
+    entManager.addComponentToObject(redEnemy, IdComponent::new(redEnemy));
 
     let blueEnemy = entManager.newObject();
     entManager.addComponentToObject(blueEnemy, HealthComponent{health:0});
@@ -55,7 +58,7 @@ fn main() {
     let iter = zip.filter_map(|attack| Some(attack.as_mut()?));
     for attack in iter{
         println!("someone has an attack damage of {}", attack.getAttackDamage())
-    }
+    } */
 
 
 
