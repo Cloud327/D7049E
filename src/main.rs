@@ -3,6 +3,7 @@
 
 mod assetTest;
 mod ECS;
+pub mod gameManager;
 use ECS::eventManager;
 use ECS::attackRateComponent::AttackRateComponent;
 
@@ -12,6 +13,9 @@ use crate::ECS::{entityManager::EntityManager, healthComponent::HealthComponent,
 
 fn main() {
 
+    
+
+    
     eventManager::test();
     
     let mut entManager = EntityManager::new();

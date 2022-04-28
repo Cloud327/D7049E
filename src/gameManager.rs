@@ -1,3 +1,5 @@
+use crate::ECS::{entityManager::EntityManager, eventManager::EventManager, eventEnum::EventEnum};
+
 
 
 pub struct GameManager{
@@ -22,10 +24,11 @@ impl GameManager{
         self.eventManager.update();
     }
 
-    fn eventloop(self){
+    fn eventloop(&mut self){
         let event = self.eventManager.readEvent();
 
         if let EventEnum::takeDamageEvent{id, damage} = event {
+            
             // find HealthComponent on index=id
             //
         }
@@ -34,4 +37,14 @@ impl GameManager{
             println!("{}, {}", x, y);
         }
     }
+}
+
+
+pub fn test(){
+    
+
+    
+
+
+
 }

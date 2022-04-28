@@ -12,6 +12,10 @@ impl EventManager{
         }
     }
 
+    pub fn update(self){
+
+    }
+
     pub fn sendEvent(&mut self, event: EventEnum){
         self.eventBuffer.push(event);
     }
