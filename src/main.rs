@@ -3,6 +3,8 @@
 
 mod assetTest;
 mod gameManager;
+mod meshEnum;
+mod meshHandler;
 mod ECS;
 use ECS::{eventManager, idComponent::IdComponent};
 use ECS::attackRateComponent::AttackRateComponent;

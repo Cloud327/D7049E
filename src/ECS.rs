@@ -10,3 +10,4 @@ pub mod eventEnum;
 pub mod idComponent;
 pub mod typeEnum;
 pub mod typeComponent;
+pub mod renderableComponent;

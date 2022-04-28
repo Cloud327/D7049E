@@ -1,5 +1,5 @@
 use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, healthComponent::HealthComponent, idComponent::IdComponent, eventEnum::EventEnum, 
-    typeEnum::TypeEnum, typeComponent::TypeComponent, attackDamageComponent::AttackDamageComponent};
+    typeEnum::TypeEnum, typeComponent::TypeComponent, attackDamageComponent::AttackDamageComponent, renderableComponent::RenderableComponent};
 
 
 pub struct GameManager{
@@ -17,7 +17,9 @@ impl GameManager{
     }
 
     pub fn initialize(){
-
+        let path1 = Path::new("src/resources/mushroom.obj");
+        let path2 = Path::new("src/resources/mushroom.mtl");
+        
     }
 
     pub fn gameloop(&self){
@@ -66,7 +68,6 @@ impl GameManager{
 
 
 pub fn test(){
-    
 
     let mut gm = GameManager::new();
 
@@ -75,6 +76,7 @@ pub fn test(){
     //gm.entityManager.addComponentToObject(redEnemy, MoveComponent::new(1));
     gm.entityManager.addComponentToObject(redEnemy, IdComponent::new(redEnemy));
     gm.entityManager.addComponentToObject(redEnemy, TypeComponent::new(TypeEnum::enemyType { }));
+    //gm.entityManager.addComponentToObject(redEnemy, RenderableComponent::new());
 
 
     let whiteTower = gm.entityManager.newObject();
