@@ -1,3 +1,5 @@
+use nalgebra::Matrix4;
+
 pub struct TransformComponent{
     transform: Matrix4<usize> // Ska det verkligen vara usize? Kanske behövs floats
 
