@@ -3,9 +3,11 @@ use std::{rc::Rc, cell::RefCell};
 use kiss3d::resource::Mesh;
 
 
-
+// Stores a mesh of the object
+// A mesh can be obtained from meshHandler
 pub struct RenderableComponent{
-    mesh: Rc<RefCell<Mesh>>
+    // Maybe change to Vec of meshes
+    mesh: Rc<RefCell<Mesh>>,
 }
 
 impl RenderableComponent{
@@ -15,7 +17,7 @@ impl RenderableComponent{
         }
     }
 
-    pub fn getMesh(&self){
-        
+    pub fn getMesh(&self) -> &Rc<RefCell<Mesh>>{
+        return &self.mesh
     }
 }

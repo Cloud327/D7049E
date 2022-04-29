@@ -2,6 +2,7 @@
 
 
 mod assetTest;
+mod buttonTest;
 mod gameManager;
 mod meshEnum;
 mod meshHandler;
@@ -16,7 +17,7 @@ use crate::ECS::{entityManager::EntityManager, healthComponent::HealthComponent,
 fn main() {
 
     //eventManager::test();
-    gameManager::test();
+    //gameManager::test();
     /* 
     let mut entManager = EntityManager::new();
 
@@ -83,7 +84,8 @@ fn main() {
 
 
     // gameObject::main();
-    // assetTest::test();
+    //assetTest::test();
+    buttonTest::test();
     // println!("-----");
     // healthComponent::test();
     // println!("-----");

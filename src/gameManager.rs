@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, healthComponent::HealthComponent, idComponent::IdComponent, eventEnum::EventEnum, 
     typeEnum::TypeEnum, typeComponent::TypeComponent, attackDamageComponent::AttackDamageComponent, renderableComponent::RenderableComponent};
 
@@ -46,9 +48,9 @@ impl GameManager{
             }
         }
 
+        // Do attack with all object of type = towers
+        // Do attack = create projectile object with heading towards x, y
         if let EventEnum::towerAttackEvent{x, y} = event {
-            // Do attack with all object of type = towers
-            // Do attack = create projectile object
             let mut typeCompList = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
             let mut idCompList = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
             let zip = typeCompList.iter_mut().zip(idCompList.iter_mut());
@@ -59,10 +61,10 @@ impl GameManager{
                     println!("found tower at id: {}", idComp.getId());
                     // Do attack
                 }
-
             }
-            println!("{}, {}", x, y);
         }
+
+        // All events here
     }
 }
 
