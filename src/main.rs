@@ -2,6 +2,7 @@
 
 
 mod assetTest;
+mod conrodTest;
 mod buttonTest;
 mod gameManager;
 mod meshEnum;
@@ -84,8 +85,12 @@ fn main() {
 
 
     // gameObject::main();
+
+
     //assetTest::test();
-    buttonTest::test();
+    //buttonTest::test();
+    conrodTest::test();
+
     // println!("-----");
     // healthComponent::test();
     // println!("-----");
