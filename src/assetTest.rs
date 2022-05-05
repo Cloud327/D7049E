@@ -27,13 +27,13 @@ pub fn test(){
         .into_iter()
         .for_each(|(name,mesh,_)| {
             meshManager.add(mesh, &name[..]);
-            objNames.push(name[..].to_string());
+            // objNames.push(name[..].to_string());
         });
     
-    for name in objNames{
-        let mut m = window.add_mesh(meshManager.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0));
-    }
-
+    // for name in objNames{
+    //     let mut m = window.add_mesh(meshManager.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0));
+    // }
+    window.add_mesh(meshManager.get("obj").unwrap(), Vector3::new(1.0, 1.0, 1.0));
     
     //m.set_color(1.0, 0.0, 0.0);
     let mut pressed = false;

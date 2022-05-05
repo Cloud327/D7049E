@@ -26,6 +26,7 @@ pub struct GameManager{
     entityManager: EntityManager,
     eventManager: EventManager,
     window: Window,
+    towerMesh: (MeshManager, Vec<String>),
 }
 
 
@@ -35,6 +36,7 @@ impl GameManager{
             entityManager: EntityManager::new(),
             eventManager: EventManager::new(),
             window: Window::new("Game"),
+            towerMesh: (MeshManager::new(), Vec::new()),
         }
     }
 
@@ -161,6 +163,7 @@ impl GameManager{
     }
 
     fn eventloop(&mut self){
+        // TODO: Make into loop??
         let event = self.eventManager.readEvent();
 
         // Makes the object 
@@ -204,8 +207,14 @@ impl GameManager{
             self.entityManager.addComponentToObject(tower, TypeComponent::new(TypeEnum::towerType { }));
             self.entityManager.addComponentToObject(tower, AttackDamageComponent::new(10));
             self.entityManager.addComponentToObject(tower, AttackRateComponent::new(1));
-            // TODO: Create renderable component
-            
+
+            let mut sceneNodes: Vec<SceneNode> = Vec::new();
+            for name in &self.towerMesh.1{
+                let mut temp = self.window.add_mesh(self.towerMesh.0.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0));
+                temp.set_local_translation(Translation3::new(x as f32, y as f32, z as f32));
+                sceneNodes.push(temp);
+            }
+            self.entityManager.addComponentToObject(tower, RenderableComponent::new(sceneNodes))
         }
 
         // All events here
