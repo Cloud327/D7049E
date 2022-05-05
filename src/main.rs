@@ -4,6 +4,7 @@
 mod assetTest;
 mod conrodTest;
 mod buttonTest;
+mod conrodInKiss3d;
 mod gameManager;
 mod meshEnum;
 mod meshHandler;
@@ -88,8 +89,9 @@ fn main() {
 
 
     //assetTest::test();
-    //buttonTest::test();
-    conrodTest::test();
+    buttonTest::test();
+    //conrodTest::test();
+    //conrodInKiss3d::test();
 
     // println!("-----");
     // healthComponent::test();

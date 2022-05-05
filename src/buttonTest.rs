@@ -12,20 +12,15 @@ use na::{Vector3};
 pub fn test(){
 
     let mut window = Window::new("Kiss3d: cube");
-
     window.set_light(Light::StickToCamera);
 
-    let mut rec = window.add_rectangle(60.0, 40.0);
-    rec.set_color(0.0, 1.0, 0.0);
+    let mut towerType = "Red";
+    let mut enemyType = "Black";
 
 
     while window.render() {
-        
-        let pointer = window.cursor_pos();
-        let space = window.get_key(Key::Space);
 
-        let draw_colour = na::Point3::new(0.5, 1.0, 0.5);
-        let mut last_pos = na::Point2::new(0.0f32, 0.0f32);
+        let mut mousePos = na::Point2::new(0.0f32, 0.0f32);
 
         for event in window.events().iter(){
             match event.value {
@@ -33,12 +28,33 @@ pub fn test(){
                     println!("mouse press event on {:?} with {:?}", button, modif);
                     
                 }
+
+                // Spawn object at mouse position
                 WindowEvent::MouseButton(button, Action::Release, modif) => {
                     println!("mouse release event on {:?} with {:?}", button, modif);
                     
                 }
                 WindowEvent::Key(key, action, modif) => {
                     println!("key event {:?} on {:?} with {:?}", key, action, modif);
+
+                    if matches!(Key::Numpad1, key){
+                        // Switch to tower type 1
+                        towerType = "Red"
+                    }
+                    else if matches!(Key::Numpad2, key){
+                        // Switch to tower type 2
+                        towerType = "White"
+                    }
+
+                    else if matches!(Key::Key1, key){
+                        // Switch to enemy type 1
+                        enemyType = "Blue"
+                    }
+                    else if matches!(Key::Key2, key){
+                        // Switch to enemy type 2
+                        enemyType = "Black"
+                    }
+
                 }
                 WindowEvent::CursorPos(x, y, _modif) => {
                     //last_pos = na::Point2::new(x as f32, y as f32);
