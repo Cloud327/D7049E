@@ -1,5 +1,5 @@
 use std::{rc::Rc, cell::RefCell};
-
+use kiss3d::scene::SceneNode;
 use kiss3d::resource::Mesh;
 
 
@@ -7,17 +7,17 @@ use kiss3d::resource::Mesh;
 // A mesh can be obtained from meshHandler
 pub struct RenderableComponent{
     // Maybe change to Vec of meshes
-    mesh: Rc<RefCell<Mesh>>,
+    sceneNode: SceneNode,
 }
 
 impl RenderableComponent{
-    pub fn new(mesh: Rc<RefCell<Mesh>>) -> Self {
+    pub fn new(sceneNode: SceneNode) -> Self {
         Self{
-            mesh: mesh
+            sceneNode: sceneNode
         }
     }
 
-    pub fn getMesh(&self) -> &Rc<RefCell<Mesh>>{
-        return &self.mesh
+    pub fn getSceneNode(&self) -> &SceneNode{
+        return &self.sceneNode;
     }
 }
