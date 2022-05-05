@@ -1,5 +1,5 @@
-
+#[derive(Clone, Copy)]
 pub enum TypeEnum{
-    towerType{objectType: String},  
-    enemyType{objectType: String},  
+    towerType{},  
+    enemyType{},  
 }

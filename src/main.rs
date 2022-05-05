@@ -13,9 +13,10 @@ use crate::ECS::{entityManager::EntityManager, healthComponent::HealthComponent,
 
 fn main() {
 
-    
 
-    
+    gameManager::test2();
+
+    /*
     eventManager::test();
     
     let mut entManager = EntityManager::new();
@@ -62,7 +63,7 @@ fn main() {
     }
 
 
-
+ */
     // test::main();
 
     // let mut entManager = entManager{objects:Vec::new()};

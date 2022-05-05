@@ -6,7 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rust-3d = "0.34.0"
+#rust-3d = "0.34.0"
 kiss3d = "0.34.0"
 nalgebra = "0.30"
-downcast-rs = "1.2.0"
+#downcast-rs = "1.2.0"
+rapier3d = "0.11.1"
+tobj = "3.2.2"

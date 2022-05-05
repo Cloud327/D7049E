@@ -16,7 +16,7 @@ impl TypeComponent{
 
     }
 
-    pub fn getType(self) -> TypeEnum{
+    pub fn getType(&self) -> TypeEnum{
         return self.objectType
     }
 
