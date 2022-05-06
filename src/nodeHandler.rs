@@ -31,14 +31,15 @@ impl NodeHandler{
     }
 
     // Finds the right tuple to return based on object type
-    pub fn getNodes(&self, objectType: TypeEnum) -> Option<&(MeshManager, Vec<String>)>{
-        for tup in self.nodeList.as_slice(){
+    pub fn getNodes(&mut self, objectType: TypeEnum) -> Option<(MeshManager, Vec<String>)>{
+        for mut tup in self.nodeList{
             if matches!(tup.0, objectType){
-                return Some(&tup.1);
+                return Some(tup.1);
             }
         }
         return None;
     } 
+
 
 
 }
