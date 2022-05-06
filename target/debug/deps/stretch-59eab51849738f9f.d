@@ -1,0 +1,13 @@
+d:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\deps\stretch-59eab51849738f9f.rmeta: C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\lib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\geometry.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\node.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\number.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\result.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\style.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\algo.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\forest.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\id.rs
+
+d:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\deps\stretch-59eab51849738f9f.d: C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\lib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\geometry.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\node.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\number.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\result.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\style.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\algo.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\forest.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\id.rs
+
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\lib.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\geometry.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\node.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\number.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\result.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\style.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\algo.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\forest.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\stretch-0.3.2\src\id.rs:

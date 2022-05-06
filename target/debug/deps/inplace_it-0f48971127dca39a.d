@@ -1,0 +1,10 @@
+d:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\deps\inplace_it-0f48971127dca39a.rmeta: C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\lib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\guards\mod.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\guards\uninitialized_slice_memory_guard.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\guards\slice_memory_guard.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\fixed_array.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\alloc_array.rs
+
+d:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\deps\inplace_it-0f48971127dca39a.d: C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\lib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\guards\mod.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\guards\uninitialized_slice_memory_guard.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\guards\slice_memory_guard.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\fixed_array.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\alloc_array.rs
+
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\lib.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\guards\mod.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\guards\uninitialized_slice_memory_guard.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\guards\slice_memory_guard.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\fixed_array.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\inplace_it-0.3.3\src\alloc_array.rs:

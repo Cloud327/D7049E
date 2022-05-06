@@ -1,0 +1,15 @@
+d:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\deps\ron-218b29f9ac3065b9.rmeta: C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\lib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\mod.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\id.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\tag.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\value.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\ser\mod.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\ser\value.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\error.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\value.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\extensions.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\parse.rs
+
+d:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\deps\ron-218b29f9ac3065b9.d: C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\lib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\mod.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\id.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\tag.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\value.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\ser\mod.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\ser\value.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\error.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\value.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\extensions.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\parse.rs
+
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\lib.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\mod.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\id.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\tag.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\de\value.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\ser\mod.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\ser\value.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\error.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\value.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\extensions.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\ron-0.7.0\src\parse.rs:

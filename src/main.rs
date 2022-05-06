@@ -1,8 +1,10 @@
 #![allow(non_snake_case)]
 
-
+mod tileEnum;
+mod mapManager;
 mod assetTest;
 mod ECS;
+mod physicsManager;
 pub mod gameManager;
 use ECS::eventManager;
 use ECS::attackRateComponent::AttackRateComponent;

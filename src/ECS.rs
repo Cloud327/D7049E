@@ -11,3 +11,5 @@ pub mod typeEnum;
 pub mod typeComponent;
 pub mod renderableComponent;
 pub mod idComponent;
+pub mod attackComponent;
+pub mod rigidBodyComponent;

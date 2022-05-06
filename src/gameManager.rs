@@ -1,12 +1,11 @@
 use std::{path::Path, ops::Deref, borrow::Borrow, sync::{RwLockReadGuard, LockResult}, rc::Rc};
 
 use kiss3d::{window::{self, Window}, ncollide3d::math::Translation, event::{Action, Key}, light::Light, resource::{MeshManager, GPUVec, Texture}, scene::SceneNode};
-use ::nalgebra::{Translation3, Vector3, Point3, OPoint, Matrix3};
-
-
-use rapier3d::na::{self as nalgebra, ArrayStorage, Const};
+use ::nalgebra::{Translation3, Vector3, Point3, OPoint, Matrix3, Isometry3};
+use crate::mapManager::MapManager;
+use crate::physicsManager::PhysicsManager;
 use rapier3d::prelude::*;
-
+use crate::AttackRateComponent;
 use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, healthComponent::HealthComponent, idComponent::IdComponent, eventEnum::EventEnum, 
     typeEnum::TypeEnum, typeComponent::TypeComponent, attackDamageComponent::AttackDamageComponent, renderableComponent::RenderableComponent};
 
@@ -14,20 +13,9 @@ use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, healt
 pub struct GameManager{
     entityManager: EntityManager,
     eventManager: EventManager,
+    mapManager: MapManager,
     window: Window,
-    gravity: rapier3d::na::Matrix<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>>,
-    integration_parameters: IntegrationParameters,
-    physics_pipeline: PhysicsPipeline,
-    island_manager: IslandManager,
-    broad_phase: BroadPhase,
-    narrow_phase: NarrowPhase,
-    impulse_joint_set: JointSet,
-    //let mut multibody_joint_set = JointSet::new();
-    ccd_solver: CCDSolver,
-    physics_hooks: (),
-    event_handler: (),
-    rigid_body_set: RigidBodySet,
-    collider_set: ColliderSet,
+    physicsManager: PhysicsManager
     
     
 
@@ -39,47 +27,35 @@ impl GameManager{
         Self {
             entityManager: EntityManager::new(),
             eventManager: EventManager::new(),
+            mapManager: MapManager::new(),
             window: Window::new("Game"),
-            gravity: vector![0.0, -1.62, 0.0],
-            integration_parameters: IntegrationParameters::default(),
-            physics_pipeline: PhysicsPipeline::new(),
-            island_manager: IslandManager::new(),
-            broad_phase: BroadPhase::new(),
-            narrow_phase: NarrowPhase::new(),
-            impulse_joint_set: JointSet::new(),
-            //let mut multibody_joint_set = JointSet::new();
-            ccd_solver: CCDSolver::new(),
-            physics_hooks: (),
-            event_handler: (),
-            rigid_body_set: RigidBodySet::new(),
-            collider_set: ColliderSet::new(),
+            physicsManager: PhysicsManager::new(),
+
             
         }
     }
 
+
+
     pub fn initialize(&mut self){
         let path1 = Path::new("src/resources/mushroom/mushroom.obj");
         let path2 = Path::new("src/resources/mushroom/mushroom.mtl");
-        
 
-        
         let mut meshManager = MeshManager::new();
         let mut objNames: Vec<String> = Vec::new();
         /* Create the ground. */
         let collider = ColliderBuilder::cuboid(100.0, 0.0, 100.0).build();
-        self.collider_set.insert(collider);
-        let mut sn = self.window.add_cube(100.0, 0.0, 100.0);
-        sn.set_texture(Texture::new());
-        //sn.set_color(0.9, 0.6, 0.7);
-        //sn.set_lines_color(Point::new(1.0, 1.0, 1.0));
+        self.physicsManager.addCollider(collider);
+        self.window.add_cube(100.0, 0.0, 100.0);
+
         /* Create the bounding ball. */
-        let rigid_body = RigidBodyBuilder::new_dynamic()
+        let rigidBody = RigidBodyBuilder::new_dynamic()
                 .translation(vector![0.0, 30.0, 0.0])
                 .build();
-        //let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
         
         let mut points:Vec<Point<Real>>;
         points = Vec::new();
+
         let objects = MeshManager::load_obj(&path1, &path2, "obj")
         .unwrap()
         .into_iter()
@@ -92,32 +68,15 @@ impl GameManager{
             meshManager.add(mesh, &name[..]);
             objNames.push(name[..].to_string());
         });
+
+
         
         let collider = ColliderBuilder::convex_hull(&points).unwrap().restitution(0.7).build();
-        let mushroom_body_handle = self.rigid_body_set.insert(rigid_body);
-        self.collider_set.insert_with_parent(collider, mushroom_body_handle, &mut self.rigid_body_set);
-
-        /* Create other structures necessary for the simulation. */
-        //let gravity = vector![0.0, -9.81, 0.0];
-        /*
-        let gravity = vector![0.0, -1.62, 0.0];
-        let integration_parameters = IntegrationParameters::default();
-        let mut physics_pipeline = PhysicsPipeline::new();
-        let mut island_manager = IslandManager::new();
-        let mut broad_phase = BroadPhase::new();
-        let mut narrow_phase = NarrowPhase::new();
-        let mut impulse_joint_set = JointSet::new();
-        //let mut multibody_joint_set = JointSet::new();
-        let mut ccd_solver = CCDSolver::new();
-        let physics_hooks = ();
-        let event_handler = ();
-        */
+        let handle = self.physicsManager.addRigidBody(rigidBody);
+        self.physicsManager.addColliderWithParent(collider, handle);
 
         self.window.set_light(Light::StickToCamera);
         
-        
-        
-
         let mut nodes: Vec<SceneNode> = Vec::new();
         
         for name in objNames{
@@ -126,43 +85,71 @@ impl GameManager{
     }
 
 
+/* PSEUDOCODE
 
+initialize(){
+    loadMap()
+    loadObjects()
+}
+
+loadMap(){
+    mapManager.initialize()
+}
+
+mapmanager.initialize(){
+
+}
+
+loadObjects(){
+    send
+}
+
+
+gameLoop(){
+    while(True){
+        physicsManager.step()
+
+        for renderable in entityManager.componentVec[renderableComponents]{
+            renderable.update()
+            renderable.render()
+        }
+
+         doEvent()
+    }
+
+}
+   
+
+
+
+*/ 
 
     pub fn gameloop(&mut self){
         /* Run the game loop, stepping the simulation once per frame. */
 
     
         while true {
-            self.physics_pipeline.step(
-                &self.gravity,
-                &self.integration_parameters,
-                &mut self.island_manager,
-                &mut self.broad_phase,
-                &mut self.narrow_phase,
-                &mut self.rigid_body_set,
-                &mut self.collider_set,
-                &mut self.impulse_joint_set,
-                //&mut multibody_joint_set,
-                &mut self.ccd_solver,
-                &self.physics_hooks,
-                &self.event_handler,
-            );
+            self.physicsManager.step();
     
 
-            for rigid_body_handle in self.island_manager.active_dynamic_bodies() {
-                let rigid_body = &self.rigid_body_set[*rigid_body_handle];
-                rigid_body_handle.
-            }
-            let ball_body = &self.rigid_body_set[mushroom_body_handle];
 
 
-            println!("{}", ball_body.translation().y);
 
-            for node in nodes.iter_mut(){
-                let t = ball_body.translation();
-                let temp = Translation3::new(t[0], t[1], t[2]);
-                node.set_local_translation(temp);
-            }
+
+            //for rigid_body_handle in self.island_manager.active_dynamic_bodies() {
+            //    let rigid_body = &self.rigid_body_set[*rigid_body_handle];
+            //    rigid_body_handle.
+            //}
+            //let ball_body = &self.rigid_body_set[mushroom_body_handle];
+
+
+            //println!("{}", ball_body.translation().y);
+
+            //for node in nodes.iter_mut(){
+            //    let t = ball_body.translation();
+            //    let temp = Translation3::new(t[0], t[1], t[2]);
+            //    node.set_local_translation(temp);
+            //}
             //println!("{}", nodes[0].data().local_translation());
 
             
@@ -183,9 +170,10 @@ impl GameManager{
 
     }
 
-    fn eventloop(&mut self){
+    fn doEvent(&mut self){
         let event = self.eventManager.readEvent();
 
+        // Makes the object 
         if let EventEnum::takeDamageEvent{id, damage} = event {
             let mut healthCompList = self.entityManager.borrowComponentVecMut::<HealthComponent>().unwrap();
             let mut idCompList = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
@@ -203,9 +191,9 @@ impl GameManager{
             }
         }
 
-        if let EventEnum::towerAttackEvent{x, y} = event {
-            // Do attack with all object of type = towers
-            // Do attack = create projectile object
+        // Do attack with all object of type = towers
+        // Do attack = create projectile object with heading towards x, y
+        if let EventEnum::towerAttackEvent{x, y, z} = event {
             let mut typeCompList = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
             let mut idCompList = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
             let zip = typeCompList.iter_mut().zip(idCompList.iter_mut());
@@ -214,12 +202,17 @@ impl GameManager{
             for (typeComp, idComp) in iter {
                 if matches!(typeComp.getType(), TypeEnum::towerType{}){
                     println!("found tower at id: {}", idComp.getId());
-                    // Do attack
+                    // TODO: Do attack
                 }
-
             }
-            println!("{}, {}", x, y);
         }
+
+
+
+        
+
+
+        // All events here
     }
 }
 
@@ -255,10 +248,10 @@ pub fn test1(){
     gm.entityManager.addComponentToObject(blueEnemy, TypeComponent::new(TypeEnum::enemyType { }));
 
 
-    gm.eventManager.sendEvent(EventEnum::towerAttackEvent{x: 55, y: 20});
+    gm.eventManager.sendEvent(EventEnum::towerAttackEvent{x: 55, y: 20, z:30});
     gm.eventManager.sendEvent(EventEnum::takeDamageEvent { id: 2, damage: 10 });
     
 
-    gm.eventloop();
-    gm.eventloop();
+    gm.doEvent();
+    gm.doEvent();
 }
