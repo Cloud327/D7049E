@@ -6,6 +6,7 @@ use crate::ECS::attackRateComponent::AttackRateComponent;
 use crate::ECS::moveComponent::MoveComponent;
 use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, healthComponent::HealthComponent, idComponent::IdComponent, eventEnum::EventEnum, 
     typeEnum::TypeEnum, typeComponent::TypeComponent, attackDamageComponent::AttackDamageComponent, renderableComponent::RenderableComponent, transformComponent::TransformComponent};
+use crate::nodeHandler::NodeHandler;
 use kiss3d::resource::{MeshManager, Texture};
 use kiss3d::scene::SceneNode;
 use kiss3d::window::{Canvas, CanvasSetup, NumSamples};
@@ -26,10 +27,9 @@ use na::Matrix4;
 pub struct GameManager{
     entityManager: EntityManager,
     eventManager: EventManager,
-    mapManager: MapManager,
+    //mapManager: MapManager,
     window: Window,
-    towerMesh: (MeshManager, Vec<String>),
-    enemyMesh: (MeshManager, Vec<String>),
+    nodeHandler: NodeHandler,
     gravity: rapier3d::na::Matrix<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>>,
     integration_parameters: IntegrationParameters,
     physics_pipeline: PhysicsPipeline,
@@ -52,10 +52,9 @@ impl GameManager{
         Self {
             entityManager: EntityManager::new(),
             eventManager: EventManager::new(),
-            mapManager: MapManager::new(),
+            //mapManager: MapManager::new(),
             window: Window::new("Game"),
-            towerMesh: (MeshManager::new(), Vec::new()),
-            enemyMesh: (MeshManager::new(), Vec::new()),
+            nodeHandler: NodeHandler::new(),
             gravity: vector![0.0, -1.62, 0.0],
             integration_parameters: IntegrationParameters::default(),
             physics_pipeline: PhysicsPipeline::new(),
@@ -73,8 +72,16 @@ impl GameManager{
     }
 
     pub fn initialize(&mut self){
+
+        //Create nodes for tower and enemy
+        self.nodeHandler.addNodes(TypeEnum::towerType, Path::new("src/resources/mushroom.obj"), Path::new("src/resources/mushroom.mtl"));
+        self.nodeHandler.addNodes(TypeEnum::enemyType, Path::new("src/resources/mushroom.obj"), Path::new("src/resources/mushroom.mtl"));
+        
+        
+
         let path1 = Path::new("src/resources/mushroom.obj");
         let path2 = Path::new("src/resources/mushroom.mtl");
+
 
         let mut meshManager = MeshManager::new();
         let mut objNames: Vec<String> = Vec::new();
@@ -229,34 +236,40 @@ impl GameManager{
         // Create the necessary components for a tower
         if let EventEnum::spawnTowerEvent{x, y, z} = event {
             let tower = self.entityManager.newObject();
-            self.entityManager.addComponentToObject(tower, TypeComponent::new(TypeEnum::towerType { }));
+            self.entityManager.addComponentToObject(tower, TypeComponent::new(TypeEnum::towerType));
             self.entityManager.addComponentToObject(tower, AttackDamageComponent::new(10));
             self.entityManager.addComponentToObject(tower, AttackRateComponent::new(1));
 
+            // Get a tuple 
+            let towerNodes = self.nodeHandler.getNodes(TypeEnum::towerType).unwrap();
+
             let mut sceneNodes: Vec<SceneNode> = Vec::new();
-            for name in &self.towerMesh.1{
-                let mut temp = self.window.add_mesh(self.towerMesh.0.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0));
+            for name in towerNodes.1{
+                let mesh = towerNodes.0.get(&name);
+                let mut temp = self.window.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
                 temp.set_local_translation(Translation3::new(x as f32, y as f32, z as f32));
                 sceneNodes.push(temp);
             }
             self.entityManager.addComponentToObject(tower, RenderableComponent::new(sceneNodes))
         }
 
-        // Create the necessary components for a tower and sets translation at start point of map
+        // Create the necessary components for an enemy and sets translation at start point of map
         if let EventEnum::spawnEnemyEvent = event {
             let enemy = self.entityManager.newObject();
-            self.entityManager.addComponentToObject(enemy, TypeComponent::new(TypeEnum::enemyType { }));
+            self.entityManager.addComponentToObject(enemy, TypeComponent::new(TypeEnum::enemyType));
             self.entityManager.addComponentToObject(enemy, AttackDamageComponent::new(1));
             self.entityManager.addComponentToObject(enemy, AttackRateComponent::new(1));
             self.entityManager.addComponentToObject(enemy, HealthComponent::new(30));
             self.entityManager.addComponentToObject(enemy, MoveComponent::new(2));
 
+            let enemyNodes = self.nodeHandler.getNodes(TypeEnum::enemyType).unwrap();
+
             let mut sceneNodes: Vec<SceneNode> = Vec::new();
-            for name in &self.enemyMesh.1{
-                let mut temp = self.window.add_mesh(self.enemyMesh.0.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0));
+            for name in &enemyNodes.1{
+                let mut temp = self.window.add_mesh(enemyNodes.0.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0));
                 // TODO: Get start point from map and add translation to that point
-                let tup = self.mapManager.getStart();
-                temp.set_local_translation(Translation3::new(tup.0, 2.0, tup.1));
+                //let tup = self.mapManager.getStart();
+                //temp.set_local_translation(Translation3::new(tup.0, 2.0, tup.1));
                 sceneNodes.push(temp);
             }
             self.entityManager.addComponentToObject(enemy, RenderableComponent::new(sceneNodes))
@@ -276,7 +289,7 @@ pub fn test(){
     gm.entityManager.addComponentToObject(redEnemy, HealthComponent::new(65));
     //gm.entityManager.addComponentToObject(redEnemy, MoveComponent::new(1));
     gm.entityManager.addComponentToObject(redEnemy, IdComponent::new(redEnemy));
-    gm.entityManager.addComponentToObject(redEnemy, TypeComponent::new(TypeEnum::enemyType { }));
+    gm.entityManager.addComponentToObject(redEnemy, TypeComponent::new(TypeEnum::enemyType));
     //gm.entityManager.addComponentToObject(redEnemy, RenderableComponent::new());
 
 
@@ -284,14 +297,14 @@ pub fn test(){
     gm.entityManager.addComponentToObject(whiteTower, AttackDamageComponent::new(8));
     //gm.entityManager.addComponentToObject(redEnemy, MoveComponent::new(1));
     gm.entityManager.addComponentToObject(whiteTower, IdComponent::new(whiteTower));
-    gm.entityManager.addComponentToObject(whiteTower, TypeComponent::new(TypeEnum::towerType { }));
+    gm.entityManager.addComponentToObject(whiteTower, TypeComponent::new(TypeEnum::towerType));
 
 
     let blueEnemy = gm.entityManager.newObject();
     gm.entityManager.addComponentToObject(blueEnemy, HealthComponent::new(90));
     //gm.entityManager.addComponentToObject(redEnemy, MoveComponent::new(1));
     gm.entityManager.addComponentToObject(blueEnemy, IdComponent::new(blueEnemy));
-    gm.entityManager.addComponentToObject(blueEnemy, TypeComponent::new(TypeEnum::enemyType { }));
+    gm.entityManager.addComponentToObject(blueEnemy, TypeComponent::new(TypeEnum::enemyType));
 
 
     gm.eventManager.sendEvent(EventEnum::towerAttackEvent{x: 55, y: 20, z: 2});
