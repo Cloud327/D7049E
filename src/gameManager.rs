@@ -3,9 +3,10 @@ extern crate nalgebra as na;
 
 use std::path::Path;
 use crate::ECS::attackRateComponent::AttackRateComponent;
+use crate::ECS::moveComponent::MoveComponent;
 use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, healthComponent::HealthComponent, idComponent::IdComponent, eventEnum::EventEnum, 
     typeEnum::TypeEnum, typeComponent::TypeComponent, attackDamageComponent::AttackDamageComponent, renderableComponent::RenderableComponent, transformComponent::TransformComponent};
-use kiss3d::resource::MeshManager;
+use kiss3d::resource::{MeshManager, Texture};
 use kiss3d::scene::SceneNode;
 use kiss3d::window::{Canvas, CanvasSetup, NumSamples};
 use kiss3d::{window::Window, event::Action};
@@ -16,7 +17,7 @@ use na::{Vector3, Translation3};
 use std::{ops::Deref, borrow::Borrow, sync::{RwLockReadGuard, LockResult}};
 use ::nalgebra::{Point3, OPoint, Matrix3};
 
-use rapier3d::na as nalgebra;
+use rapier3d::na::{self as nalgebra, Const, ArrayStorage};
 use rapier3d::prelude::*;
 use na::Matrix4;
 
@@ -25,8 +26,24 @@ use na::Matrix4;
 pub struct GameManager{
     entityManager: EntityManager,
     eventManager: EventManager,
+    mapManager: MapManager,
     window: Window,
     towerMesh: (MeshManager, Vec<String>),
+    enemyMesh: (MeshManager, Vec<String>),
+    gravity: rapier3d::na::Matrix<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>>,
+    integration_parameters: IntegrationParameters,
+    physics_pipeline: PhysicsPipeline,
+    island_manager: IslandManager,
+    broad_phase: BroadPhase,
+    narrow_phase: NarrowPhase,
+    impulse_joint_set: JointSet,
+    //let mut multibody_joint_set = JointSet::new();
+    ccd_solver: CCDSolver,
+    physics_hooks: (),
+    event_handler: (),
+    rigid_body_set: RigidBodySet,
+    collider_set: ColliderSet,
+    
 }
 
 
@@ -35,72 +52,67 @@ impl GameManager{
         Self {
             entityManager: EntityManager::new(),
             eventManager: EventManager::new(),
+            mapManager: MapManager::new(),
             window: Window::new("Game"),
             towerMesh: (MeshManager::new(), Vec::new()),
+            enemyMesh: (MeshManager::new(), Vec::new()),
+            gravity: vector![0.0, -1.62, 0.0],
+            integration_parameters: IntegrationParameters::default(),
+            physics_pipeline: PhysicsPipeline::new(),
+            island_manager: IslandManager::new(),
+            broad_phase: BroadPhase::new(),
+            narrow_phase: NarrowPhase::new(),
+            impulse_joint_set: JointSet::new(),
+            //let mut multibody_joint_set = JointSet::new();
+            ccd_solver: CCDSolver::new(),
+            physics_hooks: (),
+            event_handler: (),
+            rigid_body_set: RigidBodySet::new(),
+            collider_set: ColliderSet::new(),
         }
     }
 
-    pub fn initialize(){
+    pub fn initialize(&mut self){
         let path1 = Path::new("src/resources/mushroom.obj");
         let path2 = Path::new("src/resources/mushroom.mtl");
-        
-    }
-
-    pub fn gameloop(&mut self){
-
-        /* Run the game loop, stepping the simulation once per frame. */
-
-        let path1 = Path::new("src/resources/mushroom/mushroom.obj");
-        let path2 = Path::new("src/resources/mushroom/mushroom.mtl");
-        let mut rigid_body_set = RigidBodySet::new();
-        let mut collider_set = ColliderSet::new();
-
 
         let mut meshManager = MeshManager::new();
         let mut objNames: Vec<String> = Vec::new();
-
         /* Create the ground. */
         let collider = ColliderBuilder::cuboid(100.0, 0.0, 100.0).build();
-        collider_set.insert(collider);
+        self.collider_set.insert(collider);
         let mut sn = self.window.add_cube(100.0, 0.0, 100.0);
-        sn.set_color(0.9, 0.6, 0.7);
+        sn.set_texture(Texture::new());
+        //sn.set_color(0.9, 0.6, 0.7);
         //sn.set_lines_color(Point::new(1.0, 1.0, 1.0));
         /* Create the bounding ball. */
         let rigid_body = RigidBodyBuilder::new_dynamic()
                 .translation(vector![0.0, 30.0, 0.0])
                 .build();
         //let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
-
+        
         let mut points:Vec<Point<Real>>;
         points = Vec::new();
         let objects = MeshManager::load_obj(&path1, &path2, "obj")
         .unwrap()
         .into_iter()
         .for_each(|(name,mesh,_)| {
-            let tri = mesh.borrow_mut().to_trimesh().unwrap();
             let m = mesh.borrow_mut().coords().read().unwrap().data().clone().unwrap();
-            // mesh.borrow_mut().coords().read().unwrap().data().clone().unwrap()
-            // m.coords().read().unwrap().data().unwrap().iter_mut()
             for point in m.into_iter(){
                 points.push(Point::new(point[0], point[1], point[2]));
                 
             }
             meshManager.add(mesh, &name[..]);
             objNames.push(name[..].to_string());
-            let scale = Matrix3::new(1.0, 0.0, 0.0,
-                                                                    0.0, 1.0, 0.0,
-                                                                    0.0, 0.0, 1.0);
-            //self.window.add_trimesh(tri, scale);
-
-            
         });
-
+        
         let collider = ColliderBuilder::convex_hull(&points).unwrap().restitution(0.7).build();
-        let mushroom_body_handle = rigid_body_set.insert(rigid_body);
-        collider_set.insert_with_parent(collider, mushroom_body_handle, &mut rigid_body_set);
+        let mushroom_body_handle = self.rigid_body_set.insert(rigid_body);
+        self.collider_set.insert_with_parent(collider, mushroom_body_handle, &mut self.rigid_body_set);
 
         /* Create other structures necessary for the simulation. */
         //let gravity = vector![0.0, -9.81, 0.0];
+        /*
         let gravity = vector![0.0, -1.62, 0.0];
         let integration_parameters = IntegrationParameters::default();
         let mut physics_pipeline = PhysicsPipeline::new();
@@ -112,44 +124,56 @@ impl GameManager{
         let mut ccd_solver = CCDSolver::new();
         let physics_hooks = ();
         let event_handler = ();
+        */
 
         self.window.set_light(Light::StickToCamera);
-
-
-
+        
+        
 
         let mut nodes: Vec<SceneNode> = Vec::new();
-
+        
         for name in objNames{
             nodes.push(self.window.add_mesh(meshManager.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0)));
         }
+        
+    }
 
+    pub fn gameloop(&mut self){
+
+        /* Run the game loop, stepping the simulation once per frame. */
+
+    
         while true {
-            physics_pipeline.step(
-                &gravity,
-                &integration_parameters,
-                &mut island_manager,
-                &mut broad_phase,
-                &mut narrow_phase,
-                &mut rigid_body_set,
-                &mut collider_set,
-                &mut impulse_joint_set,
+            self.physics_pipeline.step(
+                &self.gravity,
+                &self.integration_parameters,
+                &mut self.island_manager,
+                &mut self.broad_phase,
+                &mut self.narrow_phase,
+                &mut self.rigid_body_set,
+                &mut self.collider_set,
+                &mut self.impulse_joint_set,
                 //&mut multibody_joint_set,
-                &mut ccd_solver,
-                &physics_hooks,
-                &event_handler,
+                &mut self.ccd_solver,
+                &self.physics_hooks,
+                &self.event_handler,
             );
+    
 
-            let ball_body = &rigid_body_set[mushroom_body_handle];
+            // for rigid_body_handle in self.island_manager.active_dynamic_bodies() {
+            //     let rigid_body = &self.rigid_body_set[*rigid_body_handle];
+            //     //rigid_body_handle.
+            // }
+            // let ball_body = &self.rigid_body_set[mushroom_body_handle];
 
 
-            println!("{}", ball_body.translation().y);
+            // println!("{}", ball_body.translation().y);
 
-            for node in nodes.iter_mut(){
-                let t = ball_body.translation();
-                let temp = Translation3::new(t[0], t[1], t[2]);
-                node.set_local_translation(temp);
-            }
+            // for node in nodes.iter_mut(){
+            //     let t = ball_body.translation();
+            //     let temp = Translation3::new(t[0], t[1], t[2]);
+            //     node.set_local_translation(temp);
+            // }
             //println!("{}", nodes[0].data().local_translation());
 
             
@@ -159,6 +183,7 @@ impl GameManager{
             }   
 
             self.window.render();
+            
         }
     }
 
@@ -216,6 +241,27 @@ impl GameManager{
             }
             self.entityManager.addComponentToObject(tower, RenderableComponent::new(sceneNodes))
         }
+
+        // Create the necessary components for a tower and sets translation at start point of map
+        if let EventEnum::spawnEnemyEvent = event {
+            let enemy = self.entityManager.newObject();
+            self.entityManager.addComponentToObject(enemy, TypeComponent::new(TypeEnum::enemyType { }));
+            self.entityManager.addComponentToObject(enemy, AttackDamageComponent::new(1));
+            self.entityManager.addComponentToObject(enemy, AttackRateComponent::new(1));
+            self.entityManager.addComponentToObject(enemy, HealthComponent::new(30));
+            self.entityManager.addComponentToObject(enemy, MoveComponent::new(2));
+
+            let mut sceneNodes: Vec<SceneNode> = Vec::new();
+            for name in &self.enemyMesh.1{
+                let mut temp = self.window.add_mesh(self.enemyMesh.0.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0));
+                // TODO: Get start point from map and add translation to that point
+                let tup = self.mapManager.getStart();
+                temp.set_local_translation(Translation3::new(tup.0, 2.0, tup.1));
+                sceneNodes.push(temp);
+            }
+            self.entityManager.addComponentToObject(enemy, RenderableComponent::new(sceneNodes))
+        }
+
 
         // All events here
     }

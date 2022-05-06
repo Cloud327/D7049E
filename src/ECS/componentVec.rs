@@ -2,11 +2,12 @@ use std::cell::RefCell;
 /* 
  * This is a vector holding components of a single type
  * Implementation is generic so it can hold any of our different components 
-*/
+ */
 pub trait ComponentVec {
     fn asAny(&self) -> &dyn std::any::Any;
     fn asAnyMut(&mut self) -> &mut dyn std::any::Any;
     fn pushNone(&mut self);
+    fn removeAt(&mut self, index:usize);
 }
 
 impl<T: 'static> ComponentVec for RefCell<Vec<Option<T>>> {
@@ -20,5 +21,9 @@ impl<T: 'static> ComponentVec for RefCell<Vec<Option<T>>> {
 
     fn pushNone(&mut self) {
         self.get_mut().push(None)
+    }
+
+    fn removeAt(&mut self, index:usize) {
+        self.get_mut().remove(index);
     }
 }
