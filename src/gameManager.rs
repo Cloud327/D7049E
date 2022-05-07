@@ -2,8 +2,9 @@ use std::{path::Path, ops::Deref, borrow::Borrow, sync::{RwLockReadGuard, LockRe
 
 use kiss3d::{window::{self, Window}, ncollide3d::math::Translation, event::{Action, Key}, light::Light, resource::{MeshManager, GPUVec, Texture}, scene::SceneNode};
 use ::nalgebra::{Translation3, Vector3, Point3, OPoint, Matrix3, Isometry3};
-use crate::mapManager::MapManager;
+use crate::{mapManager::MapManager, ECS::rigidBodyComponent::RigidBodyComponent};
 use crate::physicsManager::PhysicsManager;
+use crate::nodeHandler::NodeHandler;
 use rapier3d::prelude::*;
 use crate::AttackRateComponent;
 use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, healthComponent::HealthComponent, idComponent::IdComponent, eventEnum::EventEnum, 
@@ -15,7 +16,8 @@ pub struct GameManager{
     eventManager: EventManager,
     mapManager: MapManager,
     window: Window,
-    physicsManager: PhysicsManager
+    physicsManager: PhysicsManager,
+    nodeHandler: NodeHandler,
     
     
 
@@ -30,33 +32,55 @@ impl GameManager{
             mapManager: MapManager::new(),
             window: Window::new("Game"),
             physicsManager: PhysicsManager::new(),
+            nodeHandler: NodeHandler::new(),
 
             
         }
     }
 
 
+    
+
 
     pub fn initialize(&mut self){
         let path1 = Path::new("src/resources/mushroom/mushroom.obj");
         let path2 = Path::new("src/resources/mushroom/mushroom.mtl");
+        self.nodeHandler.addNodes(TypeEnum::towerType, path1, path2);
+        self.nodeHandler.addNodes(TypeEnum::enemyType, path1, path2);
 
-        let mut meshManager = MeshManager::new();
-        let mut objNames: Vec<String> = Vec::new();
+        
         /* Create the ground. */
         let collider = ColliderBuilder::cuboid(100.0, 0.0, 100.0).build();
         self.physicsManager.addCollider(collider);
         self.window.add_cube(100.0, 0.0, 100.0);
 
-        /* Create the bounding ball. */
-        let rigidBody = RigidBodyBuilder::new_dynamic()
-                .translation(vector![0.0, 30.0, 0.0])
-                .build();
+
         
+
+       
+
+        self.window.set_light(Light::StickToCamera);
+        
+        let mut nodes: Vec<SceneNode> = Vec::new();
+        
+        for name in objNames{
+            nodes.push(self.window.add_mesh(meshManager.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0)));
+        }
+    }
+
+    fn placeInWorld(position: Translation3 ){
+        /* Create the rigid body. */
+        let rigidBody = RigidBodyBuilder::new_dynamic()
+        .translation(vector![0.0, 30.0, 0.0])
+        .build();
+    }
+
+    fn generate3Dobject(&mut self, obj_dir: &Path, mtl_dir: &Path)-> (MeshManager, Vec<String>, Vec<Point<Real>>){
+        let mut meshManager = MeshManager::new();
+        let mut objNames: Vec<String> = Vec::new();
         let mut points:Vec<Point<Real>>;
         points = Vec::new();
-
-        let objects = MeshManager::load_obj(&path1, &path2, "obj")
+        let objects = MeshManager::load_obj(obj_dir, mtl_dir, "obj")
         .unwrap()
         .into_iter()
         .for_each(|(name,mesh,_)| {
@@ -69,22 +93,13 @@ impl GameManager{
             objNames.push(name[..].to_string());
         });
 
+        return (meshManager, objNames, points);
+        
+        //let collider = ColliderBuilder::convex_hull(&points).unwrap().restitution(0.7).build();
+        //let handle = self.physicsManager.addRigidBody(rigidBody);
+        //self.physicsManager.addColliderWithParent(collider, handle);
 
-        
-        let collider = ColliderBuilder::convex_hull(&points).unwrap().restitution(0.7).build();
-        let handle = self.physicsManager.addRigidBody(rigidBody);
-        self.physicsManager.addColliderWithParent(collider, handle);
-
-        self.window.set_light(Light::StickToCamera);
-        
-        let mut nodes: Vec<SceneNode> = Vec::new();
-        
-        for name in objNames{
-            nodes.push(self.window.add_mesh(meshManager.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0)));
-        }
     }
-
-
 /* PSEUDOCODE
 
 initialize(){
@@ -118,11 +133,23 @@ gameLoop(){
     }
 
 }
-   
-
-
-
 */ 
+
+
+
+    fn updateNodes(&mut self){
+
+        let mut renderableList = self.entityManager.borrowComponentVecMut::<RenderableComponent>().unwrap();
+            let mut rigidBodyList = self.entityManager.borrowComponentVecMut::<RigidBodyComponent>().unwrap();
+            let zip = renderableList.iter_mut().zip(rigidBodyList.iter_mut());
+
+            let iter = zip.filter_map(|(renderable, rigidBody)| Some((rigidBody.as_mut()?, renderable.as_mut()?)));
+            for (rigidBody, renderable) in iter {
+                for node in renderable.getSceneNodes(){
+                    node.write().unwrap().set_local_translation(rigidBody.getTranslation());
+                } 
+            }
+    }
 
     pub fn gameloop(&mut self){
         /* Run the game loop, stepping the simulation once per frame. */
@@ -130,9 +157,12 @@ gameLoop(){
     
         while true {
             self.physicsManager.step();
-    
 
 
+            self.updateNodes();
+
+
+            
 
 
 
@@ -166,7 +196,7 @@ gameLoop(){
 
             //while self.window.render() {}
 
-            
+        
 
     }
 
@@ -213,6 +243,25 @@ gameLoop(){
 
 
         // All events here
+    }
+
+    fn spawnTower(&mut self, x: usize, y: usize, z: usize){
+        let tower = self.entityManager.newObject();
+        self.entityManager.addComponentToObject(tower, TypeEnum::towerType);
+        self.entityManager.addComponentToObject(tower, AttackDamageComponent::new(10));
+        self.entityManager.addComponentToObject(tower, AttackRateComponent::new(1));
+
+        // Get a tuple 
+        let towerNodes = self.nodeHandler.getNodes(TypeEnum::towerType).unwrap();
+
+        let mut sceneNodes: Vec<SceneNode> = Vec::new();
+        for name in towerNodes.1.clone(){
+            let mesh = towerNodes.0.get(&name);
+            let mut temp = self.window.add_mesh(mesh.unwrap(), Vector3::new(1.0, 1.0, 1.0));
+            temp.set_local_translation(Translation3::new(x as f32, y as f32, z as f32));
+            sceneNodes.push(temp);
+        }
+        self.entityManager.addComponentToObject(tower, RenderableComponent::new(sceneNodes))
     }
 }
 

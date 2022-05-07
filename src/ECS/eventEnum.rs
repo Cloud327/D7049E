@@ -5,3 +5,4 @@ pub enum EventEnum{
     spawnEnemyEvent,
     spawnProjectileEvent{x: usize, y: usize, z: usize},
 }
+

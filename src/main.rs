@@ -3,6 +3,7 @@
 mod tileEnum;
 mod mapManager;
 mod assetTest;
+mod nodeHandler;
 mod ECS;
 mod physicsManager;
 pub mod gameManager;
