@@ -1,38 +1,52 @@
-use kiss3d::{resource::{MeshManager}, window::Window};
-use std::{path::Path, cell::RefMut, borrow::Borrow};
+use conrod::graph::Node;
+use kiss3d::{resource::{MeshManager}, window::Window, scene::SceneNode};
+use nalgebra::{Vector3, Translation3};
+use rapier3d::{math::{Real, Point}, na::Point3};
+use std::{path::Path, cell::RefMut, borrow::Borrow, sync::RwLock, ops::DerefMut};
 use crate::ECS::typeEnum::TypeEnum;
 
 
 pub struct NodeHandler{
-    nodeList: Vec<(TypeEnum, (MeshManager, Vec<String>))>,
+    nodeList: Vec<(TypeEnum, (RwLock<MeshManager>, RwLock<Vec<RwLock<String>>>))>,
+    pointList: Vec<(TypeEnum, Vec<Point<Real>>)>,
 }
+
 
 impl NodeHandler{
     pub fn new() -> Self {
         Self{
             nodeList: Vec::new(),
+            pointList: Vec::new(),
         }
     }
 
     // Create mesh from path and add to meshList
     pub fn addNodes(&mut self, objectType: TypeEnum, path1: &Path, path2: &Path){
         let mut meshManager = MeshManager::new();
-        let mut objNames: Vec<String> = Vec::new();
+        let mut objNames: Vec<RwLock<String>> = Vec::new();
+        let mut points:Vec<Point<Real>>;
+        points = Vec::new();
 
         let objects = MeshManager::load_obj(&path1, &path2, "obj")
         .unwrap()
         .into_iter()
         .for_each(|(name,mesh,_)| {
+            let m = mesh.borrow_mut().coords().read().unwrap().data().clone().unwrap();
+            for point in m.into_iter(){
+                points.push(Point::new(point[0], point[1], point[2]));
+                
+            }
             meshManager.add(mesh, &name[..]);
-            objNames.push(name[..].to_string());
+            objNames.push(RwLock::new(name[..].to_string()));
         });
-        self.nodeList.push((objectType, (meshManager, objNames)));
+        self.pointList.push((objectType, points));
+        self.nodeList.push((objectType, (RwLock::new(meshManager), RwLock::new(objNames))));
         
     }
 
     // Finds the right tuple to return based on object type
-    pub fn getNodes(&mut self, objectType: TypeEnum) -> Option<&(MeshManager, Vec<String>)>{
-        for mut tup in &self.nodeList{
+    pub fn getNodes(&mut self, objectType: TypeEnum) -> Option<&(RwLock<MeshManager>, RwLock<Vec<RwLock<String>>>)>{
+        for mut tup in self.nodeList{
             if matches!(tup.0, objectType){
                 return Some(&tup.1);
             }
@@ -41,23 +55,18 @@ impl NodeHandler{
     } 
 
 
-    pub fn getSceneNodes(&mut self, window: Window, objectType: TypeEnum){
+    // pub fn getSceneNodes(&mut self, window: Window, objectType: TypeEnum, x: usize, y: usize, z: usize){
         
-        // for temp in self.nodeList{
-        //     if matches!(temp.0, objectType){
-        //         let towerNodes = temp.1;
-        //     }
-        // }
-        // let mut sceneNodes: Vec<SceneNode> = Vec::new();
+    //     let nodes = self.getNodes(objectType).unwrap();
+    //     let mut sceneNodes: Vec<SceneNode> = Vec::new();
         
-        // for name in towerNodes.1{
-        //     let mesh = towerNodes.0.get(&name);
-        //     let mut temp = self.window.add_mesh(mesh.unwrap(), Vector3::new(1.0, 1.0, 1.0));
-        //     temp.set_local_translation(Translation3::new(x as f32, y as f32, z as f32));
-        //     sceneNodes.push(temp);
-        // }
-    }
-
+    //     for name in nodes.1{
+    //         let mesh = nodes.0.get(&name);
+    //         let mut temp = window.add_mesh(mesh.unwrap(), Vector3::new(1.0, 1.0, 1.0));
+    //         temp.set_local_translation(Translation3::new(x as f32, y as f32, z as f32));
+    //         sceneNodes.push(temp);
+    //     }
+    // }
 
 
 }

@@ -256,11 +256,12 @@ impl GameManager{
             self.entityManager.addComponentToObject(tower, AttackRateComponent::new(1));
 
             // Get a tuple 
-            let towerNodes = self.nodeHandler.getNodes(TypeEnum::towerType).unwrap();
+            let mut towerNodes = self.nodeHandler.getNodes(TypeEnum::towerType).unwrap();
 
             let mut sceneNodes: Vec<SceneNode> = Vec::new();
-            for name in towerNodes.1.clone(){
-                let mesh = towerNodes.0.get(&name);
+            
+            for name in towerNodes.1.read().unwrap(){
+                let mesh = towerNodes.0.read().unwrap().deref().get(name.read().unwrap().as_str());
                 let mut temp = self.window.add_mesh(mesh.unwrap(), Vector3::new(1.0, 1.0, 1.0));
                 temp.set_local_translation(Translation3::new(x as f32, y as f32, z as f32));
                 sceneNodes.push(temp);
@@ -271,24 +272,24 @@ impl GameManager{
 
 
     fn spawnEnemy(&mut self){
-        let enemy = self.entityManager.newObject();
-        self.entityManager.addComponentToObject(enemy, TypeComponent::new(TypeEnum::enemyType));
-        self.entityManager.addComponentToObject(enemy, AttackDamageComponent::new(1));
-        self.entityManager.addComponentToObject(enemy, AttackRateComponent::new(1));
-        self.entityManager.addComponentToObject(enemy, HealthComponent::new(30));
-        self.entityManager.addComponentToObject(enemy, MoveComponent::new(2));
+        // let enemy = self.entityManager.newObject();
+        // self.entityManager.addComponentToObject(enemy, TypeComponent::new(TypeEnum::enemyType));
+        // self.entityManager.addComponentToObject(enemy, AttackDamageComponent::new(1));
+        // self.entityManager.addComponentToObject(enemy, AttackRateComponent::new(1));
+        // self.entityManager.addComponentToObject(enemy, HealthComponent::new(30));
+        // self.entityManager.addComponentToObject(enemy, MoveComponent::new(2));
 
-        let enemyNodes = self.nodeHandler.getNodes(TypeEnum::enemyType).unwrap();
+        // let enemyNodes = self.nodeHandler.getNodes(TypeEnum::enemyType).unwrap();
 
-        let mut sceneNodes: Vec<SceneNode> = Vec::new();
-        for name in &enemyNodes.1{
-            let mut temp = self.window.add_mesh(enemyNodes.0.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0));
-            // TODO: Get start point from map and add translation to that point
-            //let tup = self.mapManager.getStart();
-            //temp.set_local_translation(Translation3::new(tup.0, 2.0, tup.1));
-            sceneNodes.push(temp);
-        }
-        self.entityManager.addComponentToObject(enemy, RenderableComponent::new(sceneNodes))
+        // let mut sceneNodes: Vec<SceneNode> = Vec::new();
+        // for name in enemyNodes.1{
+        //     let mut temp = self.window.add_mesh(enemyNodes.0.read().unwrap().get(name.read().unwrap().as_str()).unwrap(), Vector3::new(1.0, 1.0, 1.0));
+        //     // TODO: Get start point from map and add translation to that point
+        //     //let tup = self.mapManager.getStart();
+        //     //temp.set_local_translation(Translation3::new(tup.0, 2.0, tup.1));
+        //     sceneNodes.push(temp);
+        // }
+        // self.entityManager.addComponentToObject(enemy, RenderableComponent::new(sceneNodes))
 
     }
 }
