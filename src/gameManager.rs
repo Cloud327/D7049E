@@ -238,7 +238,7 @@ impl GameManager{
             self.spawnTower(x, y, z);
         }
 
-        
+
         // Create the necessary components for an enemy and sets translation at start point of map
         if let EventEnum::spawnEnemyEvent = event {
             self.spawnEnemy();
@@ -259,7 +259,7 @@ impl GameManager{
             let towerNodes = self.nodeHandler.getNodes(TypeEnum::towerType).unwrap();
 
             let mut sceneNodes: Vec<SceneNode> = Vec::new();
-            for name in &towerNodes.1{
+            for name in towerNodes.1.clone(){
                 let mesh = towerNodes.0.get(&name);
                 let mut temp = self.window.add_mesh(mesh.unwrap(), Vector3::new(1.0, 1.0, 1.0));
                 temp.set_local_translation(Translation3::new(x as f32, y as f32, z as f32));
