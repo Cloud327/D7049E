@@ -12,3 +12,5 @@ pub mod typeEnum;
 pub mod typeComponent;
 pub mod renderableComponent;
 pub mod transformComponent;
+pub mod rigidBodyComponent;
+pub mod colliderComponent;

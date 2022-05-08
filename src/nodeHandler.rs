@@ -20,7 +20,8 @@ impl NodeHandler{
         }
     }
 
-    // Create mesh from path and add to meshList
+    // Creates meshes from path and add to meshManager
+    // 
     pub fn addNodes(&mut self, objectType: TypeEnum, path1: &Path, path2: &Path){
         let mut meshManager = MeshManager::new();
         let mut objNames: Vec<RwLock<String>> = Vec::new();

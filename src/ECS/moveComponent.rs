@@ -1,6 +1,7 @@
 
 pub struct MoveComponent{
     speed: usize,
+    // Add a list of coordinates for the path??
 }
 
 impl MoveComponent{
