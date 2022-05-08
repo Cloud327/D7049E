@@ -51,12 +51,14 @@ impl GameManager{
     pub fn initialize(&mut self){
 
         //Create nodes for tower and enemy
-        self.nodeHandler.addNodes(TypeEnum::enemyType, Path::new("src/resources/bird.obj"), Path::new("src/resources/bird.mtl"));
         self.nodeHandler.addNodes(TypeEnum::towerType, Path::new("src/resources/mushroom.obj"), Path::new("src/resources/mushroom.mtl"));
+        self.nodeHandler.addNodes(TypeEnum::enemyType, Path::new("src/resources/bird.obj"), Path::new("src/resources/bird.mtl"));
+        
         
         
 
         /* Create the ground. */
+        // TODO: Fix coords to match corner
         let collider = ColliderBuilder::cuboid(15.0, 0.0, 15.0).build();
         self.physicsManager.addCollider(collider);
         let mut ground = self.window.add_cube(15.0, 0.0, 15.0);
@@ -164,7 +166,7 @@ impl GameManager{
 
         // Create the necessary components for a tower
         if let EventEnum::spawnTowerEvent{x, y, z} = event {
-            self.spawnTower(x, y, z);
+            //self.spawnTower(x, y, z);
         }
 
 
@@ -178,7 +180,7 @@ impl GameManager{
     }
 
 
-    fn spawnTower(&mut self, x: usize, y: usize, z: usize){
+    fn spawnTower(&mut self, x: f32, y: f32, z: f32){
         let tower = self.entityManager.newObject();
             self.entityManager.addComponentToObject(tower, TypeComponent::new(TypeEnum::towerType));
             self.entityManager.addComponentToObject(tower, AttackDamageComponent::new(10));
@@ -195,7 +197,7 @@ impl GameManager{
             for name in names{
                 let mesh = meshManager.get(name.as_str()).unwrap();
                 let mut temp = self.window.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
-                temp.set_local_translation(Translation3::new(x as f32, y as f32, z as f32));
+                temp.set_local_translation(Translation3::new(x, y, z));
                 sceneNodes.push(temp);
             }
             self.entityManager.addComponentToObject(tower, RenderableComponent::new(sceneNodes));
@@ -222,8 +224,7 @@ impl GameManager{
         for name in names{
             let mesh = meshManager.get(name.as_str()).unwrap();
             let mut temp = self.window.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
-            // TODO: Get start point from map and add translation to that point
-            temp.set_local_translation(Translation3::new(tup.0, 0.0, tup.1));
+            temp.set_local_translation(Translation3::new(tup.0, 1.0, tup.1));
             sceneNodes.push(temp);
         }
         self.entityManager.addComponentToObject(enemy, RenderableComponent::new(sceneNodes));
@@ -235,7 +236,7 @@ impl GameManager{
 
         // Add Collider to PhysicsManager and ColliderHandle to ColliderComponent (like an index) with a translation 
         let collider = ColliderBuilder::new(ColliderShape::ball(1.0));
-        let collider = collider.translation(vector![tup.0, 3.0, tup.1]).build();
+        let collider = collider.translation(vector![tup.0, 1.0, tup.1]).build();
         let colliderHandle = self.physicsManager.addColliderWithParent(collider, rigidBodyHandle);
         self.entityManager.addComponentToObject(enemy, ColliderComponent::new(colliderHandle));
     }
@@ -250,7 +251,7 @@ pub fn test(){
     gm.mapManager.mapParser();
 
     gm.spawnEnemy();
-    gm.spawnTower(2, 1, 2);
+    gm.spawnTower(2.0, 0.5, 4.0);
 
     gm.gameloop();
 

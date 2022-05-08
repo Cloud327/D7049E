@@ -2,7 +2,7 @@ use conrod::graph::Node;
 use kiss3d::{resource::{MeshManager}, window::Window, scene::SceneNode};
 use nalgebra::{Vector3, Translation3};
 use rapier3d::{math::{Real, Point}, na::Point3};
-use std::{path::Path, cell::RefMut, borrow::Borrow, sync::RwLock, ops::DerefMut};
+use std::{path::Path, cell::RefMut, borrow::Borrow, sync::RwLock, ops::DerefMut, mem::discriminant};
 use crate::ECS::typeEnum::TypeEnum;
 
 
@@ -65,16 +65,19 @@ impl NodeHandler{
         return self.names.get(i);
     } 
 
+
     fn getIndex(&mut self, objectType: TypeEnum) -> Option<usize>{
         let mut i = 0;
         for objType in &self.types{
-            if matches!(objType, objectType){
+            if discriminant(objType) == discriminant(&objectType){
                 return Some(i);
             }
             i += 1;
         }
         return None;
     }
+
+
 
 
     // pub fn getSceneNodes(&mut self, window: Window, objectType: TypeEnum, x: usize, y: usize, z: usize){
