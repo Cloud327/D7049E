@@ -8,7 +8,7 @@ use crate::ECS::colliderComponent::ColliderComponent;
 use crate::ECS::moveComponent::MoveComponent;
 use crate::ECS::rigidBodyComponent::RigidBodyComponent;
 use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, healthComponent::HealthComponent, idComponent::IdComponent, eventEnum::EventEnum, 
-    typeEnum::TypeEnum, typeComponent::TypeComponent, attackDamageComponent::AttackDamageComponent, renderableComponent::RenderableComponent, transformComponent::TransformComponent};
+    typeEnum::TypeEnum, typeComponent::TypeComponent, attackDamageComponent::AttackDamageComponent, renderableComponent::RenderableComponent};
 use crate::mapManager::MapManager;
 use crate::nodeHandler::NodeHandler;
 use crate::physicsManager::PhysicsManager;
@@ -247,7 +247,7 @@ pub fn test(){
     let mut gm = GameManager::new();
     gm.initialize();
 
-    gm.mapManager.mapParser::<String>();
+    gm.mapManager.mapParser();
 
     gm.spawnEnemy();
     gm.spawnTower(2, 1, 2);

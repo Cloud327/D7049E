@@ -1,9 +1,7 @@
-use std::{path::Path, error::Error, str::FromStr, io::{BufRead, self, BufReader}, fs::File};
+use std::{error::Error,io::{BufRead, BufReader}, fs::File};
 
-use na::{DMatrix, Scalar};
+use na::{DMatrix};
 use nalgebra as na;
-use crate::tileEnum::TileEnum;
-
 
 pub struct MapManager{
     mapMatrix: DMatrix<String>
@@ -14,16 +12,15 @@ impl MapManager{
         Self {
             // this isnt actually an error its just rust-analyzer being stupid
             mapMatrix: DMatrix::from_element(3,3,"test".to_string())
-            // mapMatrix: DMatrix::from_element(15,15,TileEnum::placableTile {})
-            // this isnt actually an error its just rust-analyzer being stupid
-            // mapMatrix: DMatrix::from_fn(self.mapParser()),
         }
     }
-
-    pub fn mapParser<String>(&mut self) -> Result<i32, Box<dyn Error>>
-        // where N: FromStr + Scalar,
-        //         N::Err: Error
-        {
+    
+    /*
+     * Reads the map.csv file in resources and constructs our mapMatrix based on it
+     * map.csv should contain only the strings s,e,r,g,t for start, end, road, ground, tower
+     * seperated by semicolons since that is what excel gave me
+     */
+    pub fn mapParser(&mut self) -> Result<i32, Box<dyn Error>> {
 
         let f = File::open("src/resources/map.csv")?;
         let mut reader = BufReader::new(f);
@@ -43,7 +40,7 @@ impl MapManager{
             for datum in line?.split_terminator(";") {
             // trim the whitespace from the item, parse it, and push it to
             // the data array
-            data.push((datum.trim().to_string()));
+            data.push(datum.trim().to_string());
             // data.push(N::from_str(datum.trim())?);
             }
         }
@@ -61,32 +58,57 @@ impl MapManager{
         Ok(1)
         }
 
-    pub fn getStart(&self) -> (f32,f32) { // (x,z)
 
+    /* 
+     * Finds and returns the position of the start tile in the mapMatrix
+     * by looping through the mapMatrix... 
+     */
+    pub fn getStart(&self) -> (f32,f32) { // (x,z)
         for column in 0..self.mapMatrix.ncols(){
             for row in 0..self.mapMatrix.nrows(){
                 let s = "s".to_string();
                 if &self.mapMatrix[(row,column)] == &s {
-                // if matches!(self.mapMatrix[(row,column)].getType(), TileEnum::startTile{}) {
                     return (column as f32,row as f32)
                 } 
             }
-
         }
-
         return (1.0, 1.0)
     }
 
+    /* 
+     * Finds and returns the position of the end tile in the mapMatrix
+     * by looping through the mapMatrix... 
+     */
+    pub fn getEnd(&self) -> (f32,f32) { // (x,z)
+        for column in 0..self.mapMatrix.ncols(){
+            for row in 0..self.mapMatrix.nrows(){
+                let s = "e".to_string();
+                if &self.mapMatrix[(row,column)] == &s {
+                    return (column as f32,row as f32)
+                } 
+            }
+        }
+        return (1.0, 1.0)
+    }
+
+    /*
+     * returns the mapMatrix
+     */
     pub fn getMapMatrix(&self) -> &DMatrix<String> {
         return &self.mapMatrix
     }
 
+
+    /*
+     * Implements a BFS to find a path from start (s) to end (e) using only road-tiles (r)
+     * returns the path as an ordered vector of tuples
+     */
     pub fn findPath(&self) -> Result<Vec<(i32,i32)>,&'static str> { 
         let R:i32 = self.mapMatrix.nrows() as i32;
         let C:i32 = self.mapMatrix.ncols() as i32;
         
         // 0) copy over stuff from M_org to a mutable matrix M (used for keeping track of checked tiles)
-        let mut M = DMatrix::from_element(15,15,"g".to_string()); // this is not a error :U
+        let mut M = DMatrix::from_element(R as usize,C as usize,"g".to_string()); // this is not a error :U
         for r in 0..self.mapMatrix.nrows() {
             for c in 0..self.mapMatrix.ncols() {
                 M[(r,c)] = self.mapMatrix[(r,c)].to_string();
@@ -153,6 +175,6 @@ impl MapManager{
         // BFS algorithm terminated without returning True
         // then there was no element M[i][j] which is 2, then
         // no available path
-        Err("no")
+        return Err("no");
     }
 }

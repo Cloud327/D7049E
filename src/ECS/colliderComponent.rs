@@ -10,7 +10,7 @@ pub struct ColliderComponent{
 }
 
 impl ColliderComponent{
-    pub fn new(collider: ColliderHandle)-> Self{ // Att det är static kanske är omega dåligt
+    pub fn new(collider: ColliderHandle)-> Self{ 
         Self{
             colliderHandle: collider,
         }
