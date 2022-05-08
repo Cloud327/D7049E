@@ -7,16 +7,21 @@ use crate::ECS::typeEnum::TypeEnum;
 
 
 pub struct NodeHandler{
-    nodeList: Vec<(TypeEnum, (RwLock<MeshManager>, RwLock<Vec<RwLock<String>>>))>,
-    pointList: Vec<(TypeEnum, Vec<Point<Real>>)>,
+    meshManager: Vec<MeshManager>,
+    names: Vec<Vec<String>>,
+    points: Vec<Vec<Point<Real>>>,
+    types: Vec<TypeEnum>,
 }
 
 
 impl NodeHandler{
     pub fn new() -> Self {
         Self{
-            nodeList: Vec::new(),
-            pointList: Vec::new(),
+            meshManager: Vec::new(),
+            names: Vec::new(),
+            points: Vec::new(),
+            types: Vec::new(),
+
         }
     }
 
@@ -24,9 +29,8 @@ impl NodeHandler{
     // 
     pub fn addNodes(&mut self, objectType: TypeEnum, path1: &Path, path2: &Path){
         let mut meshManager = MeshManager::new();
-        let mut objNames: Vec<RwLock<String>> = Vec::new();
-        let mut points:Vec<Point<Real>>;
-        points = Vec::new();
+        let mut objNames: Vec<String> = Vec::new();
+        let mut points:Vec<Point<Real>> = Vec::new();
 
         let objects = MeshManager::load_obj(&path1, &path2, "obj")
         .unwrap()
@@ -38,22 +42,39 @@ impl NodeHandler{
                 
             }
             meshManager.add(mesh, &name[..]);
-            objNames.push(RwLock::new(name[..].to_string()));
+            objNames.push(name[..].to_string());
         });
-        self.pointList.push((objectType, points));
-        self.nodeList.push((objectType, (RwLock::new(meshManager), RwLock::new(objNames))));
+        self.points.push(points);
+        self.meshManager.push(meshManager);
+        self.names.push(objNames);
+        self.types.push(objectType);
         
     }
 
-    // Finds the right tuple to return based on object type
-    pub fn getNodes(&mut self, objectType: TypeEnum) -> Option<&(RwLock<MeshManager>, RwLock<Vec<RwLock<String>>>)>{
-        for mut tup in self.nodeList{
-            if matches!(tup.0, objectType){
-                return Some(&tup.1);
+
+    // Finds the right meshManager to return based on object type
+    pub fn getMeshManager(&mut self, objectType: TypeEnum) -> Option<&mut MeshManager>{
+        let i = self.getIndex(objectType).unwrap();
+        return self.meshManager.get_mut(i);
+    } 
+
+    
+    // Finds the right name list to return based on object type
+    pub fn getNames(&mut self, objectType: TypeEnum) -> Option<&Vec<String>>{
+        let i = self.getIndex(objectType).unwrap();
+        return self.names.get(i);
+    } 
+
+    fn getIndex(&mut self, objectType: TypeEnum) -> Option<usize>{
+        let mut i = 0;
+        for objType in &self.types{
+            if matches!(objType, objectType){
+                return Some(i);
             }
+            i += 1;
         }
         return None;
-    } 
+    }
 
 
     // pub fn getSceneNodes(&mut self, window: Window, objectType: TypeEnum, x: usize, y: usize, z: usize){

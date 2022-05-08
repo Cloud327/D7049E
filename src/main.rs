@@ -89,8 +89,9 @@ fn main() {
 
     // gameObject::main();
 
+    gameManager::test();
 
-    assetTest::test();
+    //assetTest::test();
     //buttonTest::test();
     //conrodTest::test();
     //conrodInKiss3d::test();

@@ -58,15 +58,23 @@ impl PhysicsManager{
     }
 
     pub fn addRigidBody(&mut self, rigidBody: RigidBody) -> RigidBodyHandle{
-        self.rigidBodySet.insert(rigidBody)
+        return self.rigidBodySet.insert(rigidBody);
     }
 
-    pub fn addCollider(&mut self, collider: Collider){
-        self.colliderSet.insert(collider);
+    pub fn addCollider(&mut self, collider: Collider) -> ColliderHandle{
+        return self.colliderSet.insert(collider);
     }
 
-    pub fn addColliderWithParent(&mut self, collider: Collider, parent: RigidBodyHandle){
-        self.colliderSet.insert_with_parent(collider, parent, &mut self.rigidBodySet);
+    pub fn addColliderWithParent(&mut self, collider: Collider, parent: RigidBodyHandle) -> ColliderHandle{
+        return self.colliderSet.insert_with_parent(collider, parent, &mut self.rigidBodySet);
+    }
+
+    pub fn getRigidBody(&self, rigidBodyHandle: RigidBodyHandle) -> &RigidBody{
+        return &self.rigidBodySet[rigidBodyHandle];
+    }
+
+    pub fn getCollider(&self, colliderHandle: ColliderHandle) -> &Collider{
+        return &self.colliderSet[colliderHandle];
     }
 
 

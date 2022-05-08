@@ -1,26 +1,30 @@
 use nalgebra::{Matrix4, Translation3};
-use rapier3d::{prelude::RigidBody, math::Real, prelude::Vector};
+use rapier3d::{prelude::{RigidBody, RigidBodyHandle}, math::Real, prelude::Vector};
 
 
 /*  
  *  Stores a rigid body pointer that points to a rigid body object contained inside 
  *  rigidBodySet inside the physicsManager
  */
-pub struct RigidBodyComponent<'a>{
-    rigidBody: &'a RigidBody 
+pub struct RigidBodyComponent{
+    rigidBodyHandle: RigidBodyHandle 
 
 }
 
 
-impl RigidBodyComponent<'_>{
-    pub fn new(body: &'static RigidBody)-> Self{ // Att det är static kanske är omegadåligt
+impl RigidBodyComponent{
+    pub fn new(body: RigidBodyHandle)-> Self{ // Att det är static kanske är omegadåligt
         Self{
-            rigidBody:body
+            rigidBodyHandle:body
         }
     }
 
-    pub fn getTranslation(&self) -> Translation3<f32>{
-        Translation3::new(self.rigidBody.translation()[0], self.rigidBody.translation()[1], self.rigidBody.translation()[2])
+    // pub fn getTranslation(&self) -> Translation3<f32>{
+    //     Translation3::new(self.rigidBodyHandle.translation()[0], self.rigidBodyHandle.translation()[1], self.rigidBodyHandle.translation()[2])
+    // }
+
+    pub fn getRigidBodyHandle(&self) -> RigidBodyHandle{
+        return self.rigidBodyHandle;
     }
 
     pub fn update(){
