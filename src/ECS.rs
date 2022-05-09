@@ -13,3 +13,4 @@ pub mod renderableComponent;
 pub mod idComponent;
 pub mod attackComponent;
 pub mod rigidBodyComponent;
+pub mod colliderComponent;

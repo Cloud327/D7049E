@@ -63,17 +63,37 @@ impl GameManager{
         
         let mut nodes: Vec<SceneNode> = Vec::new();
         
-        for name in objNames{
-            nodes.push(self.window.add_mesh(meshManager.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0)));
-        }
+        //for name in objNames{
+        //    nodes.push(self.window.add_mesh(meshManager.get(&name).unwrap(), Vector3::new(1.0, 1.0, 1.0)));
+        //}
     }
 
-    fn placeInWorld(position: Translation3 ){
+    /*fn spawnTower(&mut self, x: usize, y: usize, z: usize){
+        let tower = self.entityManager.newObject();
+        self.entityManager.addComponentToObject(tower, TypeEnum::towerType);
+        self.entityManager.addComponentToObject(tower, AttackDamageComponent::new(10));
+        self.entityManager.addComponentToObject(tower, AttackRateComponent::new(1));
+
+        // Get a tuple 
+        let towerNodes = self.nodeHandler.getNodes(TypeEnum::towerType).unwrap();
+
+        let mut sceneNodes: Vec<SceneNode> = Vec::new();
+        for name in towerNodes.1.clone(){
+            let mesh = towerNodes.0.get(&name);
+            let mut temp = self.window.add_mesh(mesh.unwrap(), Vector3::new(1.0, 1.0, 1.0));
+            temp.set_local_translation(Translation3::new(x as f32, y as f32, z as f32));
+            sceneNodes.push(temp);
+        }
+        self.entityManager.addComponentToObject(tower, RenderableComponent::new(sceneNodes))
+    }*/
+
+    /*fn placeInWorld(position: Translation3){
         /* Create the rigid body. */
         let rigidBody = RigidBodyBuilder::new_dynamic()
         .translation(vector![0.0, 30.0, 0.0])
         .build();
-    }
+    }*/
+
 
     fn generate3Dobject(&mut self, obj_dir: &Path, mtl_dir: &Path)-> (MeshManager, Vec<String>, Vec<Point<Real>>){
         let mut meshManager = MeshManager::new();
@@ -245,24 +265,7 @@ gameLoop(){
         // All events here
     }
 
-    fn spawnTower(&mut self, x: usize, y: usize, z: usize){
-        let tower = self.entityManager.newObject();
-        self.entityManager.addComponentToObject(tower, TypeEnum::towerType);
-        self.entityManager.addComponentToObject(tower, AttackDamageComponent::new(10));
-        self.entityManager.addComponentToObject(tower, AttackRateComponent::new(1));
-
-        // Get a tuple 
-        let towerNodes = self.nodeHandler.getNodes(TypeEnum::towerType).unwrap();
-
-        let mut sceneNodes: Vec<SceneNode> = Vec::new();
-        for name in towerNodes.1.clone(){
-            let mesh = towerNodes.0.get(&name);
-            let mut temp = self.window.add_mesh(mesh.unwrap(), Vector3::new(1.0, 1.0, 1.0));
-            temp.set_local_translation(Translation3::new(x as f32, y as f32, z as f32));
-            sceneNodes.push(temp);
-        }
-        self.entityManager.addComponentToObject(tower, RenderableComponent::new(sceneNodes))
-    }
+    
 }
 
 pub fn test2(){

@@ -33,7 +33,7 @@ impl EntityManager{
         return object_id; // And we return object_id so have an index to refer back to later.
     }
 
-
+    
 
     /*
      * Removes an object by setting all its components to None

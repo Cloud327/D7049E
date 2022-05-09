@@ -1,20 +1,18 @@
-use nalgebra::Matrix4;
-use rapier3d::prelude::collider;
-
+use rapier3d::prelude::Collider;
 
 /*  
  *  TODO?
  */
-pub struct colliderComponent<'a>{
-    
+pub struct ColliderComponent<'a>{
+    collider: &'a Collider
 
 }
 
 
-impl colliderComponent{
-    pub fn new()-> Self{ // Att det är static kanske är omega dåligt
+impl ColliderComponent<'_>{
+    pub fn new(collider: &'static Collider)-> Self{ // Att det Ã¤r static kanske Ã¤r omega dÃ¥ligt
         Self{
-            
+            collider:collider
         }
     }
 
@@ -22,5 +20,34 @@ impl colliderComponent{
         
     }
 
+    pub fn getCollider(&self) -> &rapier3d::geometry::Collider{
+        return self.collider;
+    }
+
 
 }
+
+/*
+pub struct RigidBodyComponent<'a>{
+    rigidBody: &'a RigidBody 
+
+}
+
+
+impl RigidBodyComponent<'_>{
+    pub fn new(body: &'static RigidBody)-> Self{ // Att det ï¿½r static kanske ï¿½r omega dï¿½ligt
+        Self{
+            rigidBody:body
+        }
+    }
+
+    pub fn getTranslation(&self) -> Translation3<f32>{
+        Translation3::new(self.rigidBody.translation()[0], self.rigidBody.translation()[1], self.rigidBody.translation()[2])
+    }
+
+    pub fn update(){
+        
+    }
+
+
+} */

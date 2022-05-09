@@ -1,4 +1,5 @@
-use rapier3d::prelude::*;
+use kiss3d::ncollide3d::narrow_phase::ContactEvent;
+use rapier3d::{prelude::*, crossbeam::{self, channel::{Sender, Receiver}}};
 
 
 pub struct PhysicsManager{
@@ -8,18 +9,23 @@ pub struct PhysicsManager{
     islandManager: IslandManager,
     broadPhase: BroadPhase,
     narrowPhase: NarrowPhase,
-    impulseJointSet: JointSet,
-    //let mut multibody_joint_set = JointSet::new();
+    impulseJointSet: ImpulseJointSet,
+    multibody_joint_set: MultibodyJointSet,
     ccdSolver: CCDSolver,
     physicsHooks: (),
     eventHandler: (),
     rigidBodySet: RigidBodySet,
-    colliderSet: ColliderSet
+    colliderSet: ColliderSet,
+    collisionSend: Sender<CollisionEvent>,
+    collisionRecieve: Receiver<CollisionEvent>
+    
 }
 
 
 impl PhysicsManager{
     pub fn new() -> Self {
+        // Used for 
+        let (sender, reciever) = crossbeam::channel::unbounded();
         Self {
             /* Create other structures necessary for the simulation. */
             //let gravity = vector![0.0, -9.81, 0.0];
@@ -29,13 +35,20 @@ impl PhysicsManager{
             islandManager: IslandManager::new(),
             broadPhase: BroadPhase::new(),
             narrowPhase: NarrowPhase::new(),
-            impulseJointSet: JointSet::new(),
-            //let mut multibody_joint_set = JointSet::new();
+            impulseJointSet: ImpulseJointSet::new(),
+            multibody_joint_set: MultibodyJointSet::new(),
             ccdSolver: CCDSolver::new(),
             physicsHooks: (),
-            eventHandler: (),
+            
             rigidBodySet: RigidBodySet::new(),
             colliderSet: ColliderSet::new(),
+
+            // Initialize the event collector.
+            collisionSend: sender,
+            collisionRecieve: reciever,
+            eventHandler: (),
+            //eventHandler: ChannelEventCollector::new(),
+
             
         }
     }
@@ -50,7 +63,7 @@ impl PhysicsManager{
             &mut self.rigidBodySet,
             &mut self.colliderSet,
             &mut self.impulseJointSet,
-            //&mut multibody_joint_set,
+            &mut self.multibody_joint_set,
             &mut self.ccdSolver,
             &self.physicsHooks,
             &self.eventHandler,
@@ -69,9 +82,9 @@ impl PhysicsManager{
         self.colliderSet.insert_with_parent(collider, parent, &mut self.rigidBodySet);
     }
 
-
-
-
-
+    pub fn getEvent(&mut self){
+        
+        //let event_handler = ChannelEventCollector::new(intersection_send, collision_send);
+    }
 
 }
