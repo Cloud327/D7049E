@@ -12,6 +12,7 @@ pub struct RenderableComponent{
 
 impl RenderableComponent{
     pub fn new(sceneNodes: Vec<SceneNode>) -> Self {
+        // Go through the list of nodes and add them all as children to the first node
         let mut node = sceneNodes[0].clone();
         let mut first = true;
         for n in sceneNodes{
