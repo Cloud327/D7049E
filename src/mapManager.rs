@@ -67,8 +67,7 @@ impl MapManager{
     pub fn getStart(&self) -> (f32,f32) { // (x,z)
         for column in 0..self.mapMatrix.ncols(){
             for row in 0..self.mapMatrix.nrows(){
-                let s = "s".to_string();
-                if &self.mapMatrix[(row,column)] == &s {
+                if &self.mapMatrix[(row,column)] == "s" {
                     return (column as f32,row as f32)
                 } 
             }
@@ -83,8 +82,7 @@ impl MapManager{
     pub fn getEnd(&self) -> (f32,f32) { // (x,z)
         for column in 0..self.mapMatrix.ncols(){
             for row in 0..self.mapMatrix.nrows(){
-                let s = "e".to_string();
-                if &self.mapMatrix[(row,column)] == &s {
+                if &self.mapMatrix[(row,column)] == "e" {
                     return (column as f32,row as f32)
                 } 
             }
@@ -179,6 +177,8 @@ impl MapManager{
         return Err("no");
     }
 
+
+
     /*
      * Generates a renderable map from the data in the mapMatrix
      */
@@ -192,24 +192,36 @@ impl MapManager{
             for col in 0..self.mapMatrix.ncols(){
                 // what do i do here?
                 // depending of character in mm[(r,c)] draw a tile in a different color?
-                let mut tile = window.add_cube(1.0,0.2,1.0);
-                tile.set_local_translation(Translation3::new(col as f32, -0.1, row as f32));
-
-
                 let currentTile = &self.mapMatrix[(row,col)];
                 if groundTiles.contains(currentTile) {
+                    let mut tile = window.add_cube(1.0,0.2,1.0);
+                    tile.set_local_translation(Translation3::new(col as f32, 0.0, row as f32));
                     tile.set_color(0.2, 0.6, 0.0); // ground is green
                 } else if roadTiles.contains(currentTile) {
+                    let mut tile = window.add_cube(1.0,0.15,1.0);
+                    tile.set_local_translation(Translation3::new(col as f32, 0.0, row as f32));
                     tile.set_color(0.8, 0.4, 0.0); // road is brown
                 } 
-
-
             } 
         } 
-
-        // while window.render(){}
     }
 
 
 
+    /* 
+     * Finds and returns the position of all tiles with towers in the mapMatrix
+     * by looping through the mapMatrix... 
+     */
+    pub fn getTowerLocations(&self)  -> Vec<(f32,f32)> {
+        let mut towerList: Vec<(f32,f32)> = Vec::new();
+
+        for column in 0..self.mapMatrix.ncols(){
+            for row in 0..self.mapMatrix.nrows(){
+                if &self.mapMatrix[(row,column)] == "t" {
+                    towerList.push((column as f32,row as f32));
+                } 
+            }
+        }
+        return towerList;
+    }
 }
