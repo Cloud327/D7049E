@@ -1,6 +1,7 @@
 use std::{error::Error,io::{BufRead, BufReader}, fs::File};
 
-use na::{DMatrix};
+use kiss3d::window::Window;
+use na::{DMatrix, Translation3, Rotation3, geometry};
 use nalgebra as na;
 
 pub struct MapManager{
@@ -20,7 +21,7 @@ impl MapManager{
      * map.csv should contain only the strings s,e,r,g,t for start, end, road, ground, tower
      * seperated by semicolons since that is what excel gave me
      */
-    pub fn mapParser(&mut self) -> Result<i32, Box<dyn Error>> {
+    pub fn parseMap(&mut self) -> Result<i32, Box<dyn Error>> {
 
         let f = File::open("src/resources/map.csv")?;
         let mut reader = BufReader::new(f);
@@ -177,4 +178,38 @@ impl MapManager{
         // no available path
         return Err("no");
     }
+
+    /*
+     * Generates a renderable map from the data in the mapMatrix
+     */
+    pub fn drawMap(&self, window: &mut Window) {
+        // makes if cases below clearer
+        let roadTiles = "rse";
+        let groundTiles = "gt";
+
+        // loop thru mapMatrix
+        for row in 0..self.mapMatrix.nrows(){
+            for col in 0..self.mapMatrix.ncols(){
+                // what do i do here?
+                // depending of character in mm[(r,c)] draw a tile in a different color?
+                let mut tile = window.add_cube(1.0,0.2,1.0);
+                tile.set_local_translation(Translation3::new(col as f32, -0.1, row as f32));
+
+
+                let currentTile = &self.mapMatrix[(row,col)];
+                if groundTiles.contains(currentTile) {
+                    tile.set_color(0.2, 0.6, 0.0); // ground is green
+                } else if roadTiles.contains(currentTile) {
+                    tile.set_color(0.8, 0.4, 0.0); // road is brown
+                } 
+
+
+            } 
+        } 
+
+        // while window.render(){}
+    }
+
+
+
 }

@@ -1,7 +1,8 @@
 extern crate kiss3d;
 extern crate nalgebra as na;
 
-use ::nalgebra::{Translation3, Vector3, Point3, OPoint, Matrix3, Isometry3};
+use ::nalgebra::{Translation3, Vector3};
+use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape};
 use std::path::Path;
 use crate::ECS::attackRateComponent::AttackRateComponent;
 use crate::ECS::colliderComponent::ColliderComponent;
@@ -12,18 +13,13 @@ use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, healt
 use crate::mapManager::MapManager;
 use crate::nodeHandler::NodeHandler;
 use crate::physicsManager::PhysicsManager;
-use kiss3d::resource::{MeshManager, Texture};
 use kiss3d::scene::SceneNode;
 use kiss3d::{window::Window, event::Action};
 use kiss3d::light::Light;
 use kiss3d::event::{Key, MouseButton, WindowEvent};
 
-use std::{ops::Deref, borrow::Borrow, sync::{RwLockReadGuard, LockResult}};
-
-
-use rapier3d::na::{self as nalgebra, Const, ArrayStorage};
-use rapier3d::prelude::*;
-use na::Matrix4;
+use rapier3d::na::{self as nalgebra};
+use na::{Matrix4, vector};
 
 
 pub struct GameManager{
@@ -50,20 +46,13 @@ impl GameManager{
 
     pub fn initialize(&mut self){
 
-        //Create nodes for tower and enemy
+        // Create nodes for tower and enemy
         self.nodeHandler.addNodes(TypeEnum::towerType, Path::new("src/resources/mushroom.obj"), Path::new("src/resources/mushroom.mtl"));
         self.nodeHandler.addNodes(TypeEnum::enemyType, Path::new("src/resources/bird.obj"), Path::new("src/resources/bird.mtl"));
         
-        
-        
-
-        /* Create the ground. */
-        // TODO: Fix coords to match corner
-        let collider = ColliderBuilder::cuboid(15.0, 0.0, 15.0).build();
-        self.physicsManager.addCollider(collider);
-        let mut ground = self.window.add_cube(15.0, 0.0, 15.0);
-        ground.set_texture_from_file(Path::new("src/resources/map.png"), "s");
-
+        // Initialize map
+        self.mapManager.parseMap();
+        self.mapManager.drawMap(&mut self.window);
 
         self.window.set_light(Light::StickToCamera);
         
@@ -166,13 +155,13 @@ impl GameManager{
 
         // Create the necessary components for a tower
         if let EventEnum::spawnTowerEvent{x, y, z} = event {
-            //self.spawnTower(x, y, z);
+            self.spawnTower(x as f32, y as f32, z as f32);
         }
 
 
         // Create the necessary components for an enemy and sets translation at start point of map
         if let EventEnum::spawnEnemyEvent = event {
-            //self.spawnEnemy();
+            self.spawnEnemy();
         }
 
 
@@ -248,39 +237,14 @@ pub fn test(){
     let mut gm = GameManager::new();
     gm.initialize();
 
-    gm.mapManager.mapParser();
-
     gm.spawnEnemy();
-    gm.spawnTower(2.0, 0.5, 4.0);
+    gm.spawnTower(2.0, 0.4, 4.0);
 
     gm.gameloop();
-
-    // let redEnemy = gm.entityManager.newObject();
-    // gm.entityManager.addComponentToObject(redEnemy, HealthComponent::new(65));
-    // //gm.entityManager.addComponentToObject(redEnemy, MoveComponent::new(1));
-    // gm.entityManager.addComponentToObject(redEnemy, IdComponent::new(redEnemy));
-    // gm.entityManager.addComponentToObject(redEnemy, TypeComponent::new(TypeEnum::enemyType));
-    // //gm.entityManager.addComponentToObject(redEnemy, RenderableComponent::new());
-
-
-    // let whiteTower = gm.entityManager.newObject();
-    // gm.entityManager.addComponentToObject(whiteTower, AttackDamageComponent::new(8));
-    // //gm.entityManager.addComponentToObject(redEnemy, MoveComponent::new(1));
-    // gm.entityManager.addComponentToObject(whiteTower, IdComponent::new(whiteTower));
-    // gm.entityManager.addComponentToObject(whiteTower, TypeComponent::new(TypeEnum::towerType));
-
-
-    // let blueEnemy = gm.entityManager.newObject();
-    // gm.entityManager.addComponentToObject(blueEnemy, HealthComponent::new(90));
-    // //gm.entityManager.addComponentToObject(redEnemy, MoveComponent::new(1));
-    // gm.entityManager.addComponentToObject(blueEnemy, IdComponent::new(blueEnemy));
-    // gm.entityManager.addComponentToObject(blueEnemy, TypeComponent::new(TypeEnum::enemyType));
-
 
     // gm.eventManager.sendEvent(EventEnum::towerAttackEvent{x: 55, y: 20, z: 2});
     // gm.eventManager.sendEvent(EventEnum::takeDamageEvent { id: 2, damage: 10 });
     
-
     // gm.doEvent();
     // gm.doEvent();
 }
