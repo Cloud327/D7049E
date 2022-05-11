@@ -7,21 +7,32 @@ use kiss3d::resource::Mesh;
 // A mesh can be obtained from meshHandler
 pub struct RenderableComponent{
     // Maybe change to Vec of meshes
-    sceneNode: Vec<RwLock<SceneNode>>,
+    sceneNode: RwLock<SceneNode>,
 }
 
 impl RenderableComponent{
-    pub fn new(sceneNode: Vec<SceneNode>) -> Self {
-        Self{
-            sceneNode: Vec::new(),
+    pub fn new(sceneNodes: Vec<SceneNode>) -> Self {
+        let mut node = sceneNodes[0].clone();
+        let mut first = true;
+        for n in sceneNodes{
+            if first == false {
+                node.add_child(n);
+            }else{
+                first = false;
+            }
         }
+        Self{
+            sceneNode: RwLock::new(node),
+        }
+
+
     }
 
     pub fn update(&mut self){
 
     }
 
-    pub fn getSceneNodes(&self) -> &Vec<RwLock<SceneNode>>{
+    pub fn getSceneNode(&self) -> &RwLock<SceneNode>{
         return &self.sceneNode;
     }
 }
