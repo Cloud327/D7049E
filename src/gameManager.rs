@@ -4,12 +4,12 @@ extern crate nalgebra as na;
 use ::nalgebra::{Translation3, Vector3};
 use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape};
 use std::path::Path;
-use crate::ECS::attackRateComponent::AttackRateComponent;
-use crate::ECS::colliderComponent::ColliderComponent;
-use crate::ECS::moveComponent::MoveComponent;
-use crate::ECS::rigidBodyComponent::RigidBodyComponent;
-use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, healthComponent::HealthComponent, idComponent::IdComponent, eventEnum::EventEnum, 
-    typeEnum::TypeEnum, typeComponent::TypeComponent, attackDamageComponent::AttackDamageComponent, renderableComponent::RenderableComponent};
+use crate::ECS::Components::attackRateComponent::AttackRateComponent;
+use crate::ECS::Components::colliderComponent::ColliderComponent;
+use crate::ECS::Components::moveComponent::MoveComponent;
+use crate::ECS::Components::rigidBodyComponent::RigidBodyComponent;
+use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, Components::healthComponent::HealthComponent, Components::idComponent::IdComponent, eventEnum::EventEnum, 
+    typeEnum::TypeEnum, Components::typeComponent::TypeComponent, Components::attackDamageComponent::AttackDamageComponent, Components::renderableComponent::RenderableComponent};
 use crate::mapManager::MapManager;
 use crate::nodeHandler::NodeHandler;
 use crate::physicsManager::PhysicsManager;

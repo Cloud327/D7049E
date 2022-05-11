@@ -1,4 +1,4 @@
-use super::{componentVec::ComponentVec, idComponent::IdComponent};
+use super::{componentVec::ComponentVec, Components::idComponent::IdComponent};
 use std::{cell::{RefCell, RefMut}};
 
 
