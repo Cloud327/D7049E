@@ -31,6 +31,7 @@ checkGame function
 towerAttackEvent
 takedamageEvent
 spawnProjectile function
+add transformations(?) for spawnEnemy and spawnProjectile
 
 spawnWaveOfEnemies
 
@@ -67,14 +68,17 @@ impl GameManager{
         }
     }
 
+
     pub fn initialize(&mut self){
 
+        // Set parameters
         self.towerAttackDamage = 10;
         self.enemyAttackDamage = 1;
 
         // Create nodes for tower and enemy
         self.nodeHandler.addNodes(TypeEnum::towerType, Path::new("src/resources/mushroom.obj"), Path::new("src/resources/mushroom.mtl"));
         self.nodeHandler.addNodes(TypeEnum::enemyType, Path::new("src/resources/bird.obj"), Path::new("src/resources/bird.mtl"));
+        // TODO: Add projectile here too
         
         // Initialize map
         self.mapManager.parseMap();
@@ -144,6 +148,7 @@ impl GameManager{
             //while self.window.render() {}
     }
 
+
     fn checkGame(&self){
         /*
         enemyCount = 0
@@ -164,10 +169,11 @@ impl GameManager{
  
     }
 
+    
     fn doEvent(&mut self){
         let event = self.eventManager.readEvent();
 
-        // Makes the object 
+
         if let EventEnum::takeDamageEvent{id, damage} = event {
             let mut healthCompList = self.entityManager.borrowComponentVecMut::<HealthComponent>().unwrap();
             let mut idCompList = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
@@ -176,9 +182,7 @@ impl GameManager{
             let iter = zip.filter_map(|(healthComp, idComp)| Some((healthComp.as_mut()?, idComp.as_mut()?)));
             for (healthComp, idComp) in iter {
                 if idComp.getId() == id {
-                    println!("health {} at id: {}", healthComp.getHealth(), id);
                     healthComp.decreaseHealth(damage);
-                    println!("health {} at id: {}", healthComp.getHealth(), id);
                 } else {
                     println!("No such id");
                 }
