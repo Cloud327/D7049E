@@ -17,7 +17,16 @@ impl EventManager{
     }
 
     pub fn readEvent(&mut self) -> EventEnum{
-        return self.eventBuffer.remove(0)
+        return self.eventBuffer.remove(0);
+    }
+
+    pub fn eventBufferIsEmpty(&self) -> bool{
+        if self.eventBuffer.is_empty(){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
 
@@ -28,7 +37,7 @@ impl EventManager{
 pub fn test(){
     let mut em = EventManager::new();
     em.sendEvent(EventEnum::takeDamageEvent { id: 0, damage: 22 });
-    em.sendEvent(EventEnum::towerAttackEvent{xTarget: 55, yTarget: 20, zTarget: 2});
+    em.sendEvent(EventEnum::towerAttackEvent{xTarget: 55.0, yTarget: 20.0, zTarget: 2.0});
 
     let t = em.readEvent();
 

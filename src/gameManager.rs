@@ -31,11 +31,18 @@ checkGame function
 towerAttackEvent
 takedamageEvent
 spawnProjectile function
+get obj file for projectile
+
 add transformations(?) for spawnEnemy and spawnProjectile
 
 spawnWaveOfEnemies
 
 spawn tower with key press on random empty tile
+
+For tomorrow:
+optimize the spawn functions (create help function for repetetive code)
+use help function in spawnTower, also fix scale and maybe rotation
+get obj
 
 */
 
@@ -50,6 +57,7 @@ pub struct GameManager{
     nodeHandler: NodeHandler,
     towerAttackDamage: usize,
     enemyAttackDamage: usize,
+    enemyHeight: f32
 
 }
 
@@ -65,6 +73,7 @@ impl GameManager{
             nodeHandler: NodeHandler::new(),
             towerAttackDamage: 0,
             enemyAttackDamage: 0,
+            enemyHeight: 0.0,
         }
     }
 
@@ -74,15 +83,18 @@ impl GameManager{
         // Set parameters
         self.towerAttackDamage = 10;
         self.enemyAttackDamage = 1;
+        self.enemyHeight = 1.0;
 
         // Create nodes for tower and enemy
         self.nodeHandler.addNodes(TypeEnum::towerType, Path::new("src/resources/mushroom.obj"), Path::new("src/resources/mushroom.mtl"));
         self.nodeHandler.addNodes(TypeEnum::enemyType, Path::new("src/resources/bird.obj"), Path::new("src/resources/bird.mtl"));
+        self.nodeHandler.addNodes(TypeEnum::baseType, Path::new("src/resources/castle-tower.obj"), Path::new("src/resources/castle-tower.mtl"));
         // TODO: Add projectile here too
         
         // Initialize map
         self.mapManager.parseMap();
         self.mapManager.drawMap(&mut self.window);
+        self.createBase();
 
         self.window.set_light(Light::StickToCamera);
         
@@ -140,6 +152,10 @@ impl GameManager{
             // On some key press, spawn tower on random empty tile
 
             self.checkGame();
+            
+            // while !self.eventManager.eventBufferIsEmpty(){
+            //     self.doEvent();
+            // }
 
             self.window.render();
             
@@ -149,30 +165,37 @@ impl GameManager{
     }
 
 
-    fn checkGame(&self){
-        /*
-        enemyCount = 0
-        Loop through all objects with renderable/rigidbody/collision components
-            if object type = enemy:
-                Send attackEvent/takeDamageEvent ? 
-                if enemy is at end:
-                    send takeTamageEvent to base
-                enemyCount += 1
+    fn checkGame(&mut self){
+        let mut enemyCount = 0;
 
-        if enemyCount = 0:
-            Spawn new wave or won game
-        
-        if base's healthComponent = 0:  // Make sure we don't delete base object before saying game over
-            game over
-        
-        */
- 
+        //let mut healthCompList = self.entityManager.borrowComponentVecMut::<HealthComponent>().unwrap();
+        let mut rigidBodyCompList = self.entityManager.borrowComponentVecMut::<RigidBodyComponent>().unwrap();
+        let mut typeCompList = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
+        let zip = rigidBodyCompList.iter_mut().zip(typeCompList.iter_mut());
+
+        let iter = zip.filter_map
+        (|(rigidBodyComp, typeComp)| Some((rigidBodyComp.as_mut()?, typeComp.as_mut()?)));
+        for (rigidBodyComp, typeComp) in iter {
+            if matches!(typeComp.getType(), TypeEnum::enemyType){
+                let position = self.physicsManager.getRigidBody(rigidBodyComp.getRigidBodyHandle()).translation();
+                // send towerAttackEvent or call attack function from here?
+                self.eventManager.sendEvent(EventEnum::towerAttackEvent { xTarget: position[0], yTarget: position[1], zTarget: position[2] });
+                enemyCount += 1;
+            }
+        }
+
+        if enemyCount == 0{
+            // Spawn new wave or won game
+        }
+
+        // if base's healthComponent = 0:  // Make sure we don't delete base object before saying game over
+        //     game over
+
     }
 
-    
+
     fn doEvent(&mut self){
         let event = self.eventManager.readEvent();
-
 
         if let EventEnum::takeDamageEvent{id, damage} = event {
             let mut healthCompList = self.entityManager.borrowComponentVecMut::<HealthComponent>().unwrap();
@@ -190,14 +213,15 @@ impl GameManager{
         }
 
         // Do attack with all object of type = towers
-        // Do attack = create projectile object with heading towards x, y
+        // Do attack = create projectile object with heading towards x, y, z
         if let EventEnum::towerAttackEvent{xTarget, yTarget, zTarget} = event {
+            let coordList = self.mapManager.getTowerLocations();
+            for coords in coordList{
+                self.spawnProjectile(xTarget as f32, yTarget as f32, zTarget as f32, 
+                                        coords.0 as f32, self.enemyHeight as f32, coords.1 as f32);
+                println!("Spawn projectile!")
 
-            //Collect coords of all towers from map
-            // loop through that list and spawn projectiles
-                // Spawn projectile from x,y,z with heading towords xTarget, yTarget, zTarget
-                //self.spawnProjectile(0 as f32, 0 as f32, 0 as f32);
-
+            }
         }
 
 
@@ -216,40 +240,57 @@ impl GameManager{
         // All events here
     }
 
-    fn spawnProjectile(&mut self, x:  f32, y: f32, z: f32){
+
+    fn createRenderComponents(&mut self, id: usize, objectType: TypeEnum, x: f32, y: f32, z: f32, scale: f32){
+        let temp = self.nodeHandler.getNames(TypeEnum::baseType).unwrap();
+        let names = temp.clone();
+
+        let meshManager = self.nodeHandler.getMeshManager(objectType).unwrap();
+
+        let mut groupNode = self.window.add_group();
+
+        for name in names{
+            let mesh = meshManager.get(name.as_str()).unwrap();
+            groupNode.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
+        }
+        groupNode.set_local_translation(Translation3::new(x, y, z));
+        groupNode.set_local_scale(scale, scale, scale);
+        self.entityManager.addComponentToObject(id, RenderableComponent::new(groupNode));
+
+        // Add RigidBody to PhysicsManager and RigidBodyHandle to RigidBodyComponent (like an index) with a translation 
+        let body = RigidBodyBuilder::new(RigidBodyType::Dynamic);
+        let rigidBodyHandle = self.physicsManager.addRigidBody(body.translation(vector![x, y, z]).build());
+        self.entityManager.addComponentToObject(id, RigidBodyComponent::new(rigidBodyHandle));
+
+        // Add Collider to PhysicsManager and ColliderHandle to ColliderComponent (like an index) with a translation 
+        let collider = ColliderBuilder::new(ColliderShape::ball(1.0));
+        let collider = collider.translation(vector![x, y, z]).build();
+        let colliderHandle = self.physicsManager.addColliderWithParent(collider, rigidBodyHandle);
+        self.entityManager.addComponentToObject(id, ColliderComponent::new(colliderHandle));
+
+    }
+
+
+    fn createBase(&mut self){
+        let endCoords = self.mapManager.getEnd();
+
+        let base = self.entityManager.newObject();
+        self.entityManager.addComponentToObject(base, TypeComponent::new(TypeEnum::baseType));
+        self.entityManager.addComponentToObject(base, HealthComponent::new(20));
+
+        self.createRenderComponents(base, TypeEnum::baseType, endCoords.0, 0.2, endCoords.1, 0.007);
+
+    }
+
+
+    fn spawnProjectile(&mut self, xTarget:  f32, yTarget: f32, zTarget: f32, xOrigin: f32, yOrigin: f32, zOrigin: f32){
         //TODO: Add ability to move
         let projectile = self.entityManager.newObject();
         self.entityManager.addComponentToObject(projectile, TypeComponent::new(TypeEnum::projectileType));
         self.entityManager.addComponentToObject(projectile, AttackDamageComponent::new(self.towerAttackDamage));
         self.entityManager.addComponentToObject(projectile, MoveComponent::new(5));
 
-        let temp = self.nodeHandler.getNames(TypeEnum::enemyType).unwrap();
-        let names = temp.clone();
-
-        let meshManager = self.nodeHandler.getMeshManager(TypeEnum::projectileType).unwrap();
-
-        let mut sceneNodes: Vec<SceneNode> = Vec::new();
-        let tup = self.mapManager.getStart();
-
-        for name in names{
-            let mesh = meshManager.get(name.as_str()).unwrap();
-            let mut temp = self.window.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
-            temp.set_local_translation(Translation3::new(x, y, z));
-            sceneNodes.push(temp);
-        }
-        self.entityManager.addComponentToObject(projectile, RenderableComponent::new(sceneNodes));
-
-        // Add RigidBody to PhysicsManager and RigidBodyHandle to RigidBodyComponent (like an index) with a translation 
-        let body = RigidBodyBuilder::new(RigidBodyType::Dynamic);
-        let rigidBodyHandle = self.physicsManager.addRigidBody(body.translation(vector![x, y, z]).build());
-        self.entityManager.addComponentToObject(projectile, RigidBodyComponent::new(rigidBodyHandle));
-
-        // Add Collider to PhysicsManager and ColliderHandle to ColliderComponent (like an index) with a translation 
-        let collider = ColliderBuilder::new(ColliderShape::ball(1.0));
-        let collider = collider.translation(vector![x, y, z]).build();
-        let colliderHandle = self.physicsManager.addColliderWithParent(collider, rigidBodyHandle);
-        self.entityManager.addComponentToObject(projectile, ColliderComponent::new(colliderHandle));
-
+        self.createRenderComponents(projectile, TypeEnum::projectileType,  xOrigin, yOrigin, zOrigin, 1.0);
 
     }
 
@@ -266,15 +307,14 @@ impl GameManager{
 
         let meshManager = self.nodeHandler.getMeshManager(TypeEnum::towerType).unwrap();
 
-        let mut sceneNodes: Vec<SceneNode> = Vec::new();
-        
+        let mut groupNode = self.window.add_group();
+
         for name in names{
             let mesh = meshManager.get(name.as_str()).unwrap();
-            let mut temp = self.window.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
-            temp.set_local_translation(Translation3::new(x, y, z));
-            sceneNodes.push(temp);
+            groupNode.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
         }
-        self.entityManager.addComponentToObject(tower, RenderableComponent::new(sceneNodes));
+        groupNode.set_local_translation(Translation3::new(x, y, z));
+        self.entityManager.addComponentToObject(tower, RenderableComponent::new(groupNode));
     }
 
 
@@ -288,32 +328,9 @@ impl GameManager{
         self.entityManager.addComponentToObject(enemy, HealthComponent::new(30));
         self.entityManager.addComponentToObject(enemy, MoveComponent::new(2));
 
-        let temp = self.nodeHandler.getNames(TypeEnum::enemyType).unwrap();
-        let names = temp.clone();
+        let startCoords = self.mapManager.getStart();
 
-        let meshManager = self.nodeHandler.getMeshManager(TypeEnum::enemyType).unwrap();
-
-        let mut sceneNodes: Vec<SceneNode> = Vec::new();
-        let tup = self.mapManager.getStart();
-
-        for name in names{
-            let mesh = meshManager.get(name.as_str()).unwrap();
-            let mut temp = self.window.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
-            temp.set_local_translation(Translation3::new(tup.0, 1.0, tup.1));
-            sceneNodes.push(temp);
-        }
-        self.entityManager.addComponentToObject(enemy, RenderableComponent::new(sceneNodes));
-
-        // Add RigidBody to PhysicsManager and RigidBodyHandle to RigidBodyComponent (like an index) with a translation 
-        let body = RigidBodyBuilder::new(RigidBodyType::Dynamic);
-        let rigidBodyHandle = self.physicsManager.addRigidBody(body.translation(vector![tup.0, 1.0, tup.1]).build());
-        self.entityManager.addComponentToObject(enemy, RigidBodyComponent::new(rigidBodyHandle));
-
-        // Add Collider to PhysicsManager and ColliderHandle to ColliderComponent (like an index) with a translation 
-        let collider = ColliderBuilder::new(ColliderShape::ball(1.0));
-        let collider = collider.translation(vector![tup.0, 1.0, tup.1]).build();
-        let colliderHandle = self.physicsManager.addColliderWithParent(collider, rigidBodyHandle);
-        self.entityManager.addComponentToObject(enemy, ColliderComponent::new(colliderHandle));
+        self.createRenderComponents(enemy, TypeEnum::enemyType, startCoords.0, self.enemyHeight, startCoords.1, 0.5);
     }
 }
 
