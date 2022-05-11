@@ -28,7 +28,7 @@ impl EventManager{
 pub fn test(){
     let mut em = EventManager::new();
     em.sendEvent(EventEnum::takeDamageEvent { id: 0, damage: 22 });
-    em.sendEvent(EventEnum::towerAttackEvent{x: 55, y: 20, z: 2});
+    em.sendEvent(EventEnum::towerAttackEvent{xTarget: 55, yTarget: 20, zTarget: 2});
 
     let t = em.readEvent();
 
@@ -38,8 +38,8 @@ pub fn test(){
 
     let t = em.readEvent();
 
-    if let EventEnum::towerAttackEvent{x, y, z} = t {
-        println!("{}, {}", x, y);
+    if let EventEnum::towerAttackEvent{xTarget, yTarget, zTarget} = t {
+        println!("{}, {}", xTarget, yTarget);
     }
 
 
