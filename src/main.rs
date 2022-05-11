@@ -4,6 +4,7 @@ mod tileEnum;
 mod mapManager;
 mod assetTest;
 mod colliderTest;
+mod colliderTest2;
 mod nodeHandler;
 mod ECS;
 mod physicsManager;
@@ -17,7 +18,7 @@ use crate::ECS::{entityManager::EntityManager, healthComponent::HealthComponent,
 
 fn main() {
 
-    colliderTest::run();
+    colliderTest2::run();
     //gameManager::test2();
 
     /*

@@ -13,10 +13,10 @@ pub struct PhysicsManager{
     multibody_joint_set: MultibodyJointSet,
     ccdSolver: CCDSolver,
     physicsHooks: (),
-    eventHandler: (),
+    eventHandler: ChannelEventCollector,
     rigidBodySet: RigidBodySet,
     colliderSet: ColliderSet,
-    collisionSend: Sender<CollisionEvent>,
+    //collisionSend: Sender<CollisionEvent>,
     collisionRecieve: Receiver<CollisionEvent>
     
 }
@@ -26,10 +26,11 @@ impl PhysicsManager{
     pub fn new() -> Self {
         // Used for 
         let (sender, reciever) = crossbeam::channel::unbounded();
+        let event_handler = ChannelEventCollector::new(sender);
         Self {
             /* Create other structures necessary for the simulation. */
-            //let gravity = vector![0.0, -9.81, 0.0];
-            gravity: vector![0.0, -1.62, 0.0],
+            gravity: vector![0.0, -9.81, 0.0],
+            //gravity: vector![0.0, -1.62, 0.0],
             integrationParameters: IntegrationParameters::default(),
             physicsPipeline: PhysicsPipeline::new(),
             islandManager: IslandManager::new(),
@@ -44,9 +45,9 @@ impl PhysicsManager{
             colliderSet: ColliderSet::new(),
 
             // Initialize the event collector.
-            collisionSend: sender,
+            //collisionSend: sender,
             collisionRecieve: reciever,
-            eventHandler: (),
+            eventHandler: event_handler,
             //eventHandler: ChannelEventCollector::new(),
 
             
@@ -70,6 +71,10 @@ impl PhysicsManager{
         );
     }
 
+    pub fn getRigidBody(&mut self, rigidBodyHandle: RigidBodyHandle) -> &RigidBody{
+        return &self.rigidBodySet[rigidBodyHandle];
+    }
+
     pub fn addRigidBody(&mut self, rigidBody: RigidBody) -> RigidBodyHandle{
         self.rigidBodySet.insert(rigidBody)
     }
@@ -82,9 +87,13 @@ impl PhysicsManager{
         self.colliderSet.insert_with_parent(collider, parent, &mut self.rigidBodySet);
     }
 
-    pub fn getEvent(&mut self){
-        
-        //let event_handler = ChannelEventCollector::new(intersection_send, collision_send);
+    pub fn getEvent(&mut self) -> Option<rapier3d::geometry::CollisionEvent>{
+        while let Ok(collisionEvent) = self.collisionRecieve.try_recv() {
+            // Handle the collision event.
+            println!("Received collision event: {:?}", collisionEvent);
+            return Some(collisionEvent);
+        }
+        return None;
     }
 
 }

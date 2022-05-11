@@ -50,10 +50,7 @@ pub fn run() {
       &event_handler,
     );
 
-    while let Ok(collision_event) = collision_recv.try_recv() {
-      // Handle the collision event.
-      println!("Received collision event: {:?}", collision_event);
-  }
+
 
     let ball_body = &rigid_body_set[ball_body_handle];
     println!(
