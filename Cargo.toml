@@ -9,5 +9,5 @@ edition = "2021"
 kiss3d = "0.34.0"
 nalgebra = "0.30"
 rapier3d = "0.12.0"
-
+rand = "0.8.5"
 

@@ -1,4 +1,4 @@
-use rapier3d::{prelude::*, crossbeam::{channel::{Sender, Receiver}, self}};
+use rapier3d::{prelude::*, crossbeam::{self, channel::Receiver}};
 
 
 pub struct PhysicsManager{

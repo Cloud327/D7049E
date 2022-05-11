@@ -5,14 +5,14 @@ mod buttonTest;
 mod gameManager;
 mod nodeHandler;
 mod physicsManager;
-mod tileEnum;
 mod mapManager;
 mod ECS;
 mod colliderTest;
 
+extern crate rand;
 
 fn main() {
-
+    // assetTest::test();
     gameManager::test();
     //colliderTest::run();
 

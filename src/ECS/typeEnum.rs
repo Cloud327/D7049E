@@ -2,4 +2,6 @@
 pub enum TypeEnum{
     towerType,  
     enemyType,  
+    projectileType,
+    baseType,
 }
