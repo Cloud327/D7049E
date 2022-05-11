@@ -16,7 +16,7 @@ impl RenderableComponent{
         let mut node = sceneNodes[0].clone();
         let mut first = true;
         for n in sceneNodes{
-            if first == false {
+            if first == false { // We don't want to add the first node as a child to itself
                 node.add_child(n);
             }else{
                 first = false;
