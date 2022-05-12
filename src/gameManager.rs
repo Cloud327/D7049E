@@ -2,7 +2,9 @@ extern crate kiss3d;
 extern crate nalgebra as na;
 
 use ::nalgebra::{Translation3, Vector3};
-use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape};
+use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody};
+use std::borrow::Borrow;
+use std::iter::{FilterMap, Zip};
 use std::path::Path;
 use crate::ECS::attackRateComponent::AttackRateComponent;
 use crate::ECS::colliderComponent::ColliderComponent;
@@ -12,7 +14,7 @@ use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, healt
     typeEnum::TypeEnum, typeComponent::TypeComponent, attackDamageComponent::AttackDamageComponent, renderableComponent::RenderableComponent};
 use crate::mapManager::MapManager;
 use crate::nodeHandler::NodeHandler;
-use crate::physicsManager::PhysicsManager;
+use crate::physicsManager::{PhysicsManager, self};
 use kiss3d::scene::SceneNode;
 use kiss3d::{window::Window, event::Action};
 use kiss3d::light::Light;
@@ -21,6 +23,25 @@ use kiss3d::event::{Key, MouseButton, WindowEvent};
 use rapier3d::na::{self as nalgebra};
 use na::{Matrix4, vector};
 
+
+/*
+TODO:
+    make enemy move along the road
+
+    checkGame function
+
+    towerAttackEvent
+
+    takedamageEvent
+
+    spawnProjectile function
+
+    add transformations(?) for spawnEnemy and spawnProjectile
+
+    spawnWaveOfEnemies
+
+    spawn tower with key press on random empty tile
+*/
 
 pub struct GameManager{
     entityManager: EntityManager,
@@ -55,6 +76,7 @@ impl GameManager{
         self.mapManager.drawMap(&mut self.window);
 
         self.window.set_light(Light::StickToCamera);
+        self.window.set_background_color(0.5, 0.7, 1.0);
         
     }
 
@@ -112,6 +134,83 @@ impl GameManager{
         }
 
             //while self.window.render() {}
+    }
+
+    /* AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA FUCK
+    fn getComponentVecIter<T: 'static, F: 'static>(&mut self) -> FilterMap<Zip<std::slice::IterMut<'_, Option<T>>, std::slice::IterMut<'_, Option<F>>>, Box::Option<(&mut T, &mut F)>>{
+        let mut compList1 = self.entityManager.borrowComponentVecMut::<T>().unwrap();
+        let mut compList2 = self.entityManager.borrowComponentVecMut::<F>().unwrap();
+        let zip = compList1.iter_mut().zip(compList2.iter_mut());
+
+        let iter = zip.filter_map(|(compList1, compList2)| Some((compList1.as_mut()?, compList2.as_mut()?)));
+        return iter;
+    } */
+
+    /*
+
+     
+
+    */
+
+    fn moveEnemies(&mut self){
+        let mut renderCompList = self.entityManager.borrowComponentVecMut::<RenderableComponent>().unwrap();
+        let mut rigidCompList = self.entityManager.borrowComponentVecMut::<RigidBodyComponent>().unwrap();
+        let mut typeCompList = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
+        let mut moveCompList = self.entityManager.borrowComponentVecMut::<MoveComponent>().unwrap();
+        let zip = renderCompList.iter_mut().zip(rigidCompList.iter_mut().zip(typeCompList.iter_mut().zip(moveCompList.iter_mut())));
+        let iter = zip.filter_map(|(renderComp, (rigidComp, (typeComp, moveComp))),
+                                                                            |Some((renderComp.as_mut()?, rigidComp.as_mut()?, typeComp.as_mut()?, moveComp.as_mut()?)));
+
+        /* Loop through all objects and if it's an enemy then move it */
+        for (renderComp, rigidComp, typeComp, moveComp) in iter {
+            if matches!(typeComp.getType(), TypeEnum::enemyType){
+                //moveEnemy()
+
+                let node = renderComp.getSceneNode();
+
+                
+                let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
+                //self.moveEnemy(rigidComp, moveComp);
+
+                // Retrieves the rigidBody coordinates
+                let t = GameManager::moveEnemy(rigidBody, moveComp);
+
+                //let t = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).translation();
+                // Sets the renderableComponent node coordinates to the rigidBody coordinates
+                node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
+            }
+            
+        }
+        
+    }
+
+    fn moveEnemy(rigidBody: &mut RigidBody, moveComp: &mut MoveComponent) -> (f32, f32, f32){
+        
+        let mut nextPoint = moveComp.getNextPoint();
+        let t = (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
+        // If the enemy is located near enough the next point, then remove it and use the new next point in the sequence
+        if  (nextPoint.0 - 0.3) < t.0 && t.0 < (nextPoint.0 + 0.3) && (nextPoint.1 - 0.3) < t.2 && t.2 < (nextPoint.1 + 0.3){
+            nextPoint = moveComp.popAndGetNextPoint();
+        }
+
+        let mut velocity = (0.0, 0.0, 0.0);
+        if t.0 < nextPoint.0{
+            velocity.0 = 0.01;
+            
+        } else if t.0 > nextPoint.0{
+            velocity.0 = -0.01;
+        }
+
+        if t.2 < nextPoint.1 {
+            velocity.2 = 0.01;
+        } else if t.2 > nextPoint.1 {
+            velocity.2 = -0.01;
+        }
+
+        rigidBody.set_linvel(vector![velocity.0, velocity.1, velocity.2], true);
+
+        return (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
+
     }
 
     fn doEvent(&mut self){
@@ -200,7 +299,7 @@ impl GameManager{
         self.entityManager.addComponentToObject(enemy, AttackDamageComponent::new(1));
         self.entityManager.addComponentToObject(enemy, AttackRateComponent::new(1));
         self.entityManager.addComponentToObject(enemy, HealthComponent::new(30));
-        self.entityManager.addComponentToObject(enemy, MoveComponent::new(2));
+        self.entityManager.addComponentToObject(enemy, MoveComponent::new(2, self.mapManager.findPath().unwrap()));
 
         let temp = self.nodeHandler.getNames(TypeEnum::enemyType).unwrap();
         let names = temp.clone();
@@ -230,6 +329,7 @@ impl GameManager{
         self.entityManager.addComponentToObject(enemy, ColliderComponent::new(colliderHandle));
     }
 }
+
 
 
 pub fn test(){

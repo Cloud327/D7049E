@@ -1,4 +1,4 @@
-use super::{componentVec::ComponentVec, idComponent::IdComponent};
+use super::{componentVec::ComponentVec, idComponent::IdComponent, attackDamageComponent};
 use std::{cell::{RefCell, RefMut}};
 
 
@@ -92,6 +92,7 @@ impl EntityManager{
         newComponentVec[object] = Some(IdComponent::new(object));
         self.componentVecs.push(Box::new(RefCell::new(newComponentVec)));
     }
+
 
 
 

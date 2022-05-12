@@ -3,7 +3,6 @@ use std::{error::Error,io::{BufRead, BufReader}, fs::File};
 use kiss3d::window::Window;
 use na::{DMatrix, Translation3, Rotation3, geometry};
 use nalgebra as na;
-
 pub struct MapManager{
     mapMatrix: DMatrix<String>
 }
