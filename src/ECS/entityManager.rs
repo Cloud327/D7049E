@@ -137,7 +137,7 @@ impl EntityManager{
         }
 
         // Give this object the Component.
-        newComponentVec[target] = Some(component);
+        newComponentVec.push(Some(component));
         self.componentVecs.push(Box::new(RefCell::new(newComponentVec)));
 
     }

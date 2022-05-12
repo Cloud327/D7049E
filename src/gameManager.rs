@@ -1,9 +1,10 @@
 extern crate kiss3d;
 extern crate nalgebra as na;
 
+use kiss3d::text::Font;
 use ::nalgebra::{Translation3, Vector3};
 use rand::Rng;
-use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape};
+use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody};
 use std::ops::Not;
 use std::path::Path;
 use crate::ECS::Components::attackRateComponent::AttackRateComponent;
@@ -12,6 +13,7 @@ use crate::ECS::Components::moveComponent::MoveComponent;
 use crate::ECS::Components::rigidBodyComponent::RigidBodyComponent;
 use crate::ECS::{eventManager::EventManager, entityManager::EntityManager, Components::healthComponent::HealthComponent, Components::idComponent::IdComponent, eventEnum::EventEnum, 
     typeEnum::TypeEnum, Components::typeComponent::TypeComponent, Components::attackDamageComponent::AttackDamageComponent, Components::renderableComponent::RenderableComponent};
+use crate::gameStateEnum::GameStateEnum;
 use crate::mapManager::MapManager;
 use crate::nodeHandler::NodeHandler;
 use crate::physicsManager::PhysicsManager;
@@ -21,18 +23,25 @@ use kiss3d::light::Light;
 use kiss3d::event::{Key, MouseButton, WindowEvent};
 
 use rapier3d::na::{self as nalgebra};
-use na::{Matrix4, vector};
+use na::{Matrix4, vector, UnitQuaternion, Point2, Point3};
 
+use std::thread::{self, JoinHandle};
+use std::time::Duration;
+use std::sync::{Arc, Mutex, mpsc};
 
 /*
 TODO:
 make enemy move along the road
+add transformations(?) for Enemy and Projectile
 
 checkGame function
 
-add transformations(?) for spawnEnemy and spawnProjectile
-
 spawnWaveOfEnemies
+
+make game parameters into a single glocal variable
+
+if base's healthComponent = 0:      // Make sure we don't delete base object before saying game over
+    game over
 
 */
 
@@ -47,7 +56,9 @@ pub struct GameManager{
     nodeHandler: NodeHandler,
     towerAttackDamage: usize,
     enemyAttackDamage: usize,
-    enemyHeight: f32
+    enemyHeight: f32,
+    towerHeight: f32,
+    gameState: GameStateEnum,
 
 }
 
@@ -61,19 +72,16 @@ impl GameManager{
             window: Window::new("Game"),
             physicsManager: PhysicsManager::new(),
             nodeHandler: NodeHandler::new(),
-            towerAttackDamage: 0,
-            enemyAttackDamage: 0,
-            enemyHeight: 0.0,
+            towerAttackDamage: 10,
+            enemyAttackDamage: 1,
+            enemyHeight: 1.0,
+            towerHeight: 0.3,
+            gameState: GameStateEnum::ongoing,
         }
     }
 
 
     pub fn initialize(&mut self){
-
-        // Set parameters
-        self.towerAttackDamage = 10;
-        self.enemyAttackDamage = 1;
-        self.enemyHeight = 1.0;
 
         // Create nodes for tower and enemy
         self.nodeHandler.addNodes(TypeEnum::towerType, Path::new("src/resources/mushroom.obj"), Path::new("src/resources/mushroom.mtl"));
@@ -86,50 +94,38 @@ impl GameManager{
         self.mapManager.drawMap(&mut self.window);
         self.createBase();
 
+        // Spawns the towers specified in the map matrix
+        let towerCoordList = self.mapManager.getTowerLocations();
+        for coords in towerCoordList{
+            self.spawnTower(coords.0, self.towerHeight, coords.1)
+        }
+
         self.window.set_light(Light::StickToCamera);
-        self.window.set_background_color(0.5, 0.7, 1.0)
+        self.window.set_background_color(0.5, 0.7, 1.0);
         
     }
 
-    /* PSEUDOCODE
-    initialize(){
-        createHome/Base()       // Create the object home/base, place at End tile and add health component, if hp = 0 -> lose game
-        loadMap()       
-    }
-
-    loadMap(){
-        mapManager.initialize()
-    }
-
-    // Will load the map matrix, map texture(?) and do various init stuff like spawn towers, enemies, etc
-    mapmanager.initialize(){
-        do stuff...
-        createObjects()
-    }
-
-    gameLoop(){
-        while(True){
-
-            doEvent()       // Executes events from event buffer
-
-            physicsManager.step()
-            for renderable in entityManager.componentVec[renderableComponents]{
-                renderable.update()     // Updates the sceneNodes after rigidBody which has been altered by physics stuff
-                                        // Add movement for enemies?
-                renderable.render()     // Draw in window?
-            }
-            
-            checkGame()         // Check win/lose/wave conditions, maybe start new wave? 
-
-            collisionCheck()        // Check collision events
-
-        }
-    }
-    */ 
-
     pub fn gameloop(&mut self){
 
-        while true {
+        // thread for towers to attack
+        let (txTowerAttack, rxTowerAttack) = mpsc::channel();
+        thread::spawn(move || {
+            loop {
+                let val = String::from("kill enemies now please :)");
+                txTowerAttack.send(val).unwrap();
+                thread::sleep(Duration::from_millis(10000));
+            }
+        });
+
+        loop{
+
+            // Check TowerAttack thread for receives
+            let receivedTowerAttack = rxTowerAttack.try_recv();
+            match receivedTowerAttack {
+                Ok(_) => self.checkEnemies(),
+                Err(_) => (),
+            }
+
             self.physicsManager.step();
 
             //self.updateNodes();
@@ -150,11 +146,25 @@ impl GameManager{
                 }                
             }
 
-            self.checkGame();
-            
-            // while !self.eventManager.eventBufferIsEmpty(){
-            //     self.doEvent();
-            // }
+            //self.checkGame();
+
+            while !self.eventManager.eventBufferIsEmpty(){
+                self.doEvent();
+            }
+
+            self.moveEnemies();
+
+
+            if matches!(self.gameState, GameStateEnum::won){
+                let font = Font::default();
+                let pos = Point2::new(self.window.width()as f32/2.0 , self.window.height()as f32/2.0);
+                self.window.draw_text("You win! :D", &pos, 250.0, &font, &Point3::new(0.6, 0.0, 0.6));
+            }
+            else if matches!(self.gameState, GameStateEnum::lost){
+                let font = Font::default();
+                let pos = Point2::new(self.window.width()as f32/2.0 , self.window.height()as f32/2.0);
+                self.window.draw_text("You lost! :(", &pos, 250.0, &font, &Point3::new(0.0, 0.0, 0.4));
+            }
 
             self.window.render();
             
@@ -163,8 +173,8 @@ impl GameManager{
     }
 
 
-    fn checkGame(&mut self){
-        let mut enemyCount = 0;
+    fn checkEnemies(&mut self){
+        let mut enemyOnMap = false;
 
         //let mut healthCompList = self.entityManager.borrowComponentVecMut::<HealthComponent>().unwrap();
         let mut rigidBodyCompList = self.entityManager.borrowComponentVecMut::<RigidBodyComponent>().unwrap();
@@ -175,19 +185,22 @@ impl GameManager{
         (|(rigidBodyComp, typeComp)| Some((rigidBodyComp.as_mut()?, typeComp.as_mut()?)));
         for (rigidBodyComp, typeComp) in iter {
             if matches!(typeComp.getType(), TypeEnum::enemyType){
-                let position = self.physicsManager.getRigidBody(rigidBodyComp.getRigidBodyHandle()).translation();
+                let position = self.physicsManager.getRigidBody(rigidBodyComp.getRigidBodyHandle()).unwrap().translation();
                 // send towerAttackEvent or call attack function from here?
                 self.eventManager.sendEvent(EventEnum::towerAttackEvent { xTarget: position[0], yTarget: position[1], zTarget: position[2] });
-                enemyCount += 1;
+                enemyOnMap = true;
+                break;
             }
         }
 
-        if enemyCount == 0{
+        if !enemyOnMap{
             // Spawn new wave or won game
+            // if no more waves:
+                self.gameState = GameStateEnum::won;
+            
         }
 
-        // if base's healthComponent = 0:  // Make sure we don't delete base object before saying game over
-        //     game over
+        
 
     }
 
@@ -239,6 +252,66 @@ impl GameManager{
     }
 
 
+    fn moveEnemies(&mut self){
+        let mut renderCompList = self.entityManager.borrowComponentVecMut::<RenderableComponent>().unwrap();
+        let mut rigidCompList = self.entityManager.borrowComponentVecMut::<RigidBodyComponent>().unwrap();
+        let mut typeCompList = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
+        let mut moveCompList = self.entityManager.borrowComponentVecMut::<MoveComponent>().unwrap();
+        let zip = renderCompList.iter_mut().zip(rigidCompList.iter_mut().zip(typeCompList.iter_mut().zip(moveCompList.iter_mut())));
+        let iter = zip.filter_map(|(renderComp, (rigidComp, (typeComp, moveComp))),
+                                                                            |Some((renderComp.as_mut()?, rigidComp.as_mut()?, typeComp.as_mut()?, moveComp.as_mut()?)));
+
+        /* Loop through all objects and if it's an enemy then move it */
+        for (renderComp, rigidComp, typeComp, moveComp) in iter {
+            if matches!(typeComp.getType(), TypeEnum::enemyType){
+                //moveEnemy()
+
+                let node = renderComp.getSceneNode();
+
+                let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
+                //self.moveEnemy(rigidComp, moveComp);
+
+                // Retrieves the rigidBody coordinates
+                let t = GameManager::moveEnemy(rigidBody, moveComp);
+
+                //let t = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).translation();
+                // Sets the renderableComponent node coordinates to the rigidBody coordinates
+                node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
+            }
+            
+        }
+        
+    }
+
+    fn moveEnemy(rigidBody: &mut RigidBody, moveComp: &mut MoveComponent) -> (f32, f32, f32){
+        
+        let mut nextPoint = moveComp.getNextPoint();
+        let t = (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
+        // If the enemy is located near enough the next point, then remove it and use the new next point in the sequence
+        if  (nextPoint.0 - 0.3) < t.0 && t.0 < (nextPoint.0 + 0.3) && (nextPoint.1 - 0.3) < t.2 && t.2 < (nextPoint.1 + 0.3){
+            nextPoint = moveComp.popAndGetNextPoint();
+        }
+
+        let mut velocity = (0.0, 0.0, 0.0);
+        if t.0 < nextPoint.0{
+            velocity.0 = 0.01;
+            
+        } else if t.0 > nextPoint.0{
+            velocity.0 = -0.01;
+        }
+
+        if t.2 < nextPoint.1 {
+            velocity.2 = 0.01;
+        } else if t.2 > nextPoint.1 {
+            velocity.2 = -0.01;
+        }
+
+        rigidBody.set_linvel(vector![velocity.0, velocity.1, velocity.2], true);
+
+        return (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
+
+    }
+
 
     fn createBase(&mut self){
         let endCoords = self.mapManager.getEnd();
@@ -259,7 +332,7 @@ impl GameManager{
         self.entityManager.addComponentToObject(projectile, AttackDamageComponent::new(self.towerAttackDamage));
         self.entityManager.addComponentToObject(projectile, MoveComponent::new(5));
 
-        self.createRenderComponents(projectile, TypeEnum::projectileType,  xOrigin, yOrigin, zOrigin, 0.06);
+        self.createRenderComponents(projectile, TypeEnum::projectileType,  xOrigin, 2.5, zOrigin, 0.06);
 
     }
 
@@ -282,10 +355,9 @@ impl GameManager{
         self.entityManager.addComponentToObject(enemy, AttackDamageComponent::new(self.enemyAttackDamage));
         self.entityManager.addComponentToObject(enemy, AttackRateComponent::new(1));
         self.entityManager.addComponentToObject(enemy, HealthComponent::new(30));
-        self.entityManager.addComponentToObject(enemy, MoveComponent::new(2));
-
+        self.entityManager.addComponentToObject(enemy, MoveComponent::newWithPath(2, self.mapManager.findPath().unwrap()));
+        
         let startCoords = self.mapManager.getStart();
-
         self.createRenderComponents(enemy, TypeEnum::enemyType, startCoords.0, self.enemyHeight, startCoords.1, 0.5);
     }
 
@@ -309,6 +381,7 @@ impl GameManager{
         }
         else if matches!(objectType, TypeEnum::projectileType){
             groupNode.set_color(0.2, 0.2, 0.2);
+            // let rot = UnitQuaternion::from_axis_angle(&Vector3::y_axis(), 0.14);
         }
         else{
             groupNode.set_color(rand::thread_rng().gen_range(0.0..1.0), rand::thread_rng().gen_range(0.0..1.0), rand::thread_rng().gen_range(0.0..1.0));
@@ -321,6 +394,7 @@ impl GameManager{
             let body = RigidBodyBuilder::new(RigidBodyType::Dynamic);
             let rigidBodyHandle = self.physicsManager.addRigidBody(body.translation(vector![x, y, z]).build());
             self.entityManager.addComponentToObject(id, RigidBodyComponent::new(rigidBodyHandle));
+
 
             // Add Collider to PhysicsManager and ColliderHandle to ColliderComponent (like an index) with a translation 
             let collider = ColliderBuilder::new(ColliderShape::ball(1.0));
@@ -340,8 +414,8 @@ pub fn test(){
     gm.initialize();
 
     gm.spawnEnemy();
-    gm.spawnTower(2.0, 0.3, 4.0);
-    gm.spawnProjectile(5.0, 5.0, 5.0, 3.0, 1.0, 10.0);
+    //gm.spawnTower(2.0, 0.3, 4.0);
+    //gm.spawnProjectile(5.0, 5.0, 5.0, 3.0, 1.0, 10.0);
 
     gm.gameloop();
 

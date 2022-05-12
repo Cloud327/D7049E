@@ -9,6 +9,7 @@ mod tileEnum;
 mod mapManager;
 mod ECS;
 mod colliderTest;
+mod gameStateEnum;
 
 
 fn main() {

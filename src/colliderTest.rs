@@ -27,7 +27,7 @@ pub fn run() {
     let ball_body = physicsManager.getRigidBody(ball_body_handle);
     println!(
       "Ball altitude: {}",
-      ball_body.translation().y
+      ball_body.unwrap().translation().y
     );
   }
 }

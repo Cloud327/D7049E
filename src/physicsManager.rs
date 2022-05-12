@@ -1,3 +1,5 @@
+use std::{sync::RwLock, borrow::Borrow};
+
 use rapier3d::{prelude::*, crossbeam::{channel::{Sender, Receiver}, self}};
 
 
@@ -81,8 +83,8 @@ impl PhysicsManager{
         return self.colliderSet.insert_with_parent(collider, parent, &mut self.rigidBodySet);
     }
 
-    pub fn getRigidBody(&self, rigidBodyHandle: RigidBodyHandle) -> &RigidBody{
-        return &self.rigidBodySet[rigidBodyHandle];
+    pub fn getRigidBody(&mut self, rigidBodyHandle: RigidBodyHandle) -> Option<&mut RigidBody>{
+        return self.rigidBodySet.get_mut(rigidBodyHandle);
     }
 
     pub fn getCollider(&self, colliderHandle: ColliderHandle) -> &Collider{
