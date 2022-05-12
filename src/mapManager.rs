@@ -231,7 +231,7 @@ impl MapManager{
      * Finds and returns the position of all tiles with towers in the mapMatrix
      * by looping through the mapMatrix... 
      */
-    pub fn nextTowerLocation(&mut self)  -> (f32,f32) {
+    pub fn nextTowerLocation(&mut self)  -> Result<(f32,f32),&'static str> {
         let mut freeList: Vec<(f32,f32)> = Vec::new();
 
         for column in 0..self.mapMatrix.ncols(){
@@ -241,9 +241,12 @@ impl MapManager{
                 } 
             }
         }
-        let nextTower = freeList[rand::thread_rng().gen_range(0..freeList.len())];
-        self.mapMatrix[(nextTower.1 as usize,nextTower.0 as usize)] = "t".to_string();
 
-        return nextTower;
+        if freeList.len() > 0 {
+            let nextTower = freeList[rand::thread_rng().gen_range(0..freeList.len())];
+            self.mapMatrix[(nextTower.1 as usize,nextTower.0 as usize)] = "t".to_string();
+            return Ok(nextTower);
+        }
+        return Err("no free tiles");
     }
 }

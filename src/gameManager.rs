@@ -2,6 +2,7 @@ extern crate kiss3d;
 extern crate nalgebra as na;
 
 use ::nalgebra::{Translation3, Vector3};
+use rand::Rng;
 use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape};
 use std::path::Path;
 use crate::ECS::Components::attackRateComponent::AttackRateComponent;
@@ -97,7 +98,7 @@ impl GameManager{
         self.createBase();
 
         self.window.set_light(Light::StickToCamera);
-        
+        self.window.set_background_color(0.5,0.7,1.0)
     }
 
     /* PSEUDOCODE
@@ -154,8 +155,11 @@ impl GameManager{
 			
             // On some key press, spawn tower on random empty tile
             if matches!(space, Action::Press) {
-                let (x,z) = self.mapManager.nextTowerLocation();
-                self.spawnTower(x,0.5,z);
+                let nextTowerLocation = self.mapManager.nextTowerLocation();
+                match nextTowerLocation {
+                    Ok(n) => self.spawnTower(n.0 ,0.5,n.1),
+                    Err(n) => println!("{}",n),
+                }                
             }
 
             self.checkGame();
@@ -266,6 +270,9 @@ impl GameManager{
         }
         groupNode.set_local_translation(Translation3::new(x, y, z));
         groupNode.set_local_scale(scale, scale, scale);
+        // random color
+        groupNode.set_color(rand::thread_rng().gen_range(0.0..0.2), rand::thread_rng().gen_range(0.0..0.2), rand::thread_rng().gen_range(0.0..0.2));
+
         self.entityManager.addComponentToObject(id, RenderableComponent::new(groupNode));
 
         // Add RigidBody to PhysicsManager and RigidBodyHandle to RigidBodyComponent (like an index) with a translation 
@@ -278,7 +285,6 @@ impl GameManager{
         let collider = collider.translation(vector![x, y, z]).build();
         let colliderHandle = self.physicsManager.addColliderWithParent(collider, rigidBodyHandle);
         self.entityManager.addComponentToObject(id, ColliderComponent::new(colliderHandle));
-
     }
 
 
@@ -325,6 +331,7 @@ impl GameManager{
             groupNode.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
         }
         groupNode.set_local_translation(Translation3::new(x, y, z));
+        groupNode.set_color(rand::thread_rng().gen_range(0.0..1.0), rand::thread_rng().gen_range(0.0..1.0), rand::thread_rng().gen_range(0.0..1.0));
         self.entityManager.addComponentToObject(tower, RenderableComponent::new(groupNode));
     }
 
@@ -352,7 +359,7 @@ pub fn test(){
     gm.initialize();
 
     gm.spawnEnemy();
-    gm.spawnTower(2.0, 0.4, 4.0);
+    // gm.spawnTower(2.0, 0.4, 4.0);
 
     gm.gameloop();
 
