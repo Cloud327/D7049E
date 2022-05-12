@@ -31,14 +31,14 @@ use std::sync::{Arc, Mutex, mpsc};
 
 /*
 TODO:
-make enemy move along the road
+fix rotations for enemies along the road and maybe projectiles
 add transformations(?) for Enemy and Projectile
 
 checkGame function
 
 spawnWaveOfEnemies
 
-make game parameters into a single glocal variable
+make game parameters into a single global variable
 
 if base's healthComponent = 0:      // Make sure we don't delete base object before saying game over
     game over
@@ -260,12 +260,10 @@ impl GameManager{
         let zip = renderCompList.iter_mut().zip(rigidCompList.iter_mut().zip(typeCompList.iter_mut().zip(moveCompList.iter_mut())));
         let iter = zip.filter_map(|(renderComp, (rigidComp, (typeComp, moveComp))),
                                                                             |Some((renderComp.as_mut()?, rigidComp.as_mut()?, typeComp.as_mut()?, moveComp.as_mut()?)));
-
         /* Loop through all objects and if it's an enemy then move it */
         for (renderComp, rigidComp, typeComp, moveComp) in iter {
             if matches!(typeComp.getType(), TypeEnum::enemyType){
                 //moveEnemy()
-
                 let node = renderComp.getSceneNode();
 
                 let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
@@ -278,14 +276,22 @@ impl GameManager{
                 // Sets the renderableComponent node coordinates to the rigidBody coordinates
                 node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
             }
-            
+            if matches!(typeComp.getType(), TypeEnum::projectileType){
+                let node = renderComp.getSceneNode();
+                let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
+
+                // Retrieves the rigidBody coordinates
+                //let t = GameManager::moveProjectile(rigidBody, moveComp);   // TODO: Write this function
+                //node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
+
+            }
         }
-        
     }
 
     fn moveEnemy(rigidBody: &mut RigidBody, moveComp: &mut MoveComponent) -> (f32, f32, f32){
         
         let mut nextPoint = moveComp.getNextPoint();
+        let speed = moveComp.getSpeed();
         let t = (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
         // If the enemy is located near enough the next point, then remove it and use the new next point in the sequence
         if  (nextPoint.0 - 0.3) < t.0 && t.0 < (nextPoint.0 + 0.3) && (nextPoint.1 - 0.3) < t.2 && t.2 < (nextPoint.1 + 0.3){
@@ -294,16 +300,16 @@ impl GameManager{
 
         let mut velocity = (0.0, 0.0, 0.0);
         if t.0 < nextPoint.0{
-            velocity.0 = 0.01;
+            velocity.0 = speed;
             
         } else if t.0 > nextPoint.0{
-            velocity.0 = -0.01;
+            velocity.0 = -speed;
         }
 
         if t.2 < nextPoint.1 {
-            velocity.2 = 0.01;
+            velocity.2 = speed;
         } else if t.2 > nextPoint.1 {
-            velocity.2 = -0.01;
+            velocity.2 = -speed;
         }
 
         rigidBody.set_linvel(vector![velocity.0, velocity.1, velocity.2], true);
@@ -330,7 +336,7 @@ impl GameManager{
         let projectile = self.entityManager.newObject();
         self.entityManager.addComponentToObject(projectile, TypeComponent::new(TypeEnum::projectileType));
         self.entityManager.addComponentToObject(projectile, AttackDamageComponent::new(self.towerAttackDamage));
-        self.entityManager.addComponentToObject(projectile, MoveComponent::new(5));
+        self.entityManager.addComponentToObject(projectile, MoveComponent::new(2.0));
 
         self.createRenderComponents(projectile, TypeEnum::projectileType,  xOrigin, 2.5, zOrigin, 0.06);
 
@@ -355,7 +361,7 @@ impl GameManager{
         self.entityManager.addComponentToObject(enemy, AttackDamageComponent::new(self.enemyAttackDamage));
         self.entityManager.addComponentToObject(enemy, AttackRateComponent::new(1));
         self.entityManager.addComponentToObject(enemy, HealthComponent::new(30));
-        self.entityManager.addComponentToObject(enemy, MoveComponent::newWithPath(2, self.mapManager.findPath().unwrap()));
+        self.entityManager.addComponentToObject(enemy, MoveComponent::newWithPath(0.5, self.mapManager.findPath().unwrap()));
         
         let startCoords = self.mapManager.getStart();
         self.createRenderComponents(enemy, TypeEnum::enemyType, startCoords.0, self.enemyHeight, startCoords.1, 0.5);

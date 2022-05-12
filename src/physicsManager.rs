@@ -29,7 +29,7 @@ impl PhysicsManager{
         let event_handler = ChannelEventCollector::new(sender);
         Self {
             /* Create other structures necessary for the simulation. */
-            gravity: vector![0.0, -9.81, 0.0],
+            gravity: vector![0.0, 0.0, 0.0],
             //gravity: vector![0.0, -1.62, 0.0],
             integrationParameters: IntegrationParameters::default(),
             physicsPipeline: PhysicsPipeline::new(),
