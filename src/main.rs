@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-
 mod assetTest;
 mod buttonTest;
 mod gameManager;

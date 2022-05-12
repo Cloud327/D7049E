@@ -5,6 +5,9 @@ use ::nalgebra::{Translation3, Vector3};
 use rand::Rng;
 use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape};
 use std::path::Path;
+use std::sync::{Arc, mpsc};
+use std::thread;
+use std::time::Duration;
 use crate::ECS::Components::attackRateComponent::AttackRateComponent;
 use crate::ECS::Components::colliderComponent::ColliderComponent;
 use crate::ECS::Components::moveComponent::MoveComponent;
@@ -62,6 +65,8 @@ pub struct GameManager{
 
 }
 
+unsafe impl Sync for GameManager {}
+unsafe impl Send for GameManager {}
 
 impl GameManager{
     pub fn new() -> Self {
@@ -140,7 +145,24 @@ impl GameManager{
 
     pub fn gameloop(&mut self){
 
+        // thread for bird spawning
+        let (tx, rx) = mpsc::channel();
+        thread::spawn(move || {
+            loop {
+                let val = String::from("spawn bird now please :)");
+                tx.send(val).unwrap();
+                thread::sleep(Duration::from_millis(1000));
+            }
+        });
+
+        // actual gameloop
         loop {
+            let received = rx.try_recv();
+            match received {
+                Ok(_) => self.spawnEnemy(),
+                Err(_) => (),
+            }
+
             self.physicsManager.step();
 
             //self.updateNodes();
@@ -157,7 +179,7 @@ impl GameManager{
             if matches!(space, Action::Press) {
                 let nextTowerLocation = self.mapManager.nextTowerLocation();
                 match nextTowerLocation {
-                    Ok(n) => self.spawnTower(n.0 ,0.5,n.1),
+                    Ok(n) => self.spawnTower(n.0 ,0.3,n.1),
                     Err(n) => println!("{}",n),
                 }                
             }
@@ -167,6 +189,10 @@ impl GameManager{
             // while !self.eventManager.eventBufferIsEmpty(){
             //     self.doEvent();
             // }
+
+            
+
+
 
             self.window.render();
 
@@ -328,7 +354,8 @@ impl GameManager{
 
         for name in names{
             let mesh = meshManager.get(name.as_str()).unwrap();
-            groupNode.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
+            let scale = rand::thread_rng().gen_range(0.3..0.7);
+            groupNode.add_mesh(mesh, Vector3::new(scale, scale, scale));
         }
         groupNode.set_local_translation(Translation3::new(x, y, z));
         groupNode.set_color(rand::thread_rng().gen_range(0.0..1.0), rand::thread_rng().gen_range(0.0..1.0), rand::thread_rng().gen_range(0.0..1.0));
@@ -347,6 +374,7 @@ impl GameManager{
         self.entityManager.addComponentToObject(enemy, MoveComponent::new(2));
 
         let startCoords = self.mapManager.getStart();
+        // let startCoords = (rand::thread_rng().gen_range(0.0..15.0),rand::thread_rng().gen_range(0.0..15.0));
 
         self.createRenderComponents(enemy, TypeEnum::enemyType, startCoords.0, self.enemyHeight, startCoords.1, 0.5);
     }
@@ -363,9 +391,21 @@ pub fn test(){
 
     gm.gameloop();
 
+    
+
     // gm.eventManager.sendEvent(EventEnum::towerAttackEvent{x: 55, y: 20, z: 2});
     // gm.eventManager.sendEvent(EventEnum::takeDamageEvent { id: 2, damage: 10 });
     
     // gm.doEvent();
     // gm.doEvent();
 }
+
+
+
+// pub fn waveTest(){
+//     let mut gm = GameManager::new();
+//     gm.initialize();
+
+
+
+// }
