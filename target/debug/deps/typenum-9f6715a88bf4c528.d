@@ -1,0 +1,18 @@
+d:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\deps\typenum-9f6715a88bf4c528.rmeta: C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\lib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\bit.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\int.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\marker_traits.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\operator_aliases.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\private.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\type_operators.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\uint.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\array.rs d:\Downloads\plugg\Virtual\ Interactive\ Environments\D7049E\target\debug\build\typenum-81fcded9a282014d\out\op.rs d:\Downloads\plugg\Virtual\ Interactive\ Environments\D7049E\target\debug\build\typenum-81fcded9a282014d\out\consts.rs
+
+d:\Downloads\plugg\Virtual Interactive Environments\D7049E\target\debug\deps\typenum-9f6715a88bf4c528.d: C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\lib.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\bit.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\int.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\marker_traits.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\operator_aliases.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\private.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\type_operators.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\uint.rs C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\array.rs d:\Downloads\plugg\Virtual\ Interactive\ Environments\D7049E\target\debug\build\typenum-81fcded9a282014d\out\op.rs d:\Downloads\plugg\Virtual\ Interactive\ Environments\D7049E\target\debug\build\typenum-81fcded9a282014d\out\consts.rs
+
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\lib.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\bit.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\int.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\marker_traits.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\operator_aliases.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\private.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\type_operators.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\uint.rs:
+C:\Users\roman\.cargo\registry\src\github.com-1ecc6299db9ec823\typenum-1.15.0\src\array.rs:
+d:\Downloads\plugg\Virtual\ Interactive\ Environments\D7049E\target\debug\build\typenum-81fcded9a282014d\out\op.rs:
+d:\Downloads\plugg\Virtual\ Interactive\ Environments\D7049E\target\debug\build\typenum-81fcded9a282014d\out\consts.rs:
+
+# env-dep:TYPENUM_BUILD_CONSTS=d:\\Downloads\\plugg\\Virtual Interactive Environments\\D7049E\\target\\debug\\build\\typenum-81fcded9a282014d\\out\\consts.rs
+# env-dep:TYPENUM_BUILD_OP=d:\\Downloads\\plugg\\Virtual Interactive Environments\\D7049E\\target\\debug\\build\\typenum-81fcded9a282014d\\out\\op.rs
