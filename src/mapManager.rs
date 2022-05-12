@@ -3,6 +3,7 @@ use std::{error::Error,io::{BufRead, BufReader}, fs::File};
 use kiss3d::window::Window;
 use na::{DMatrix, Translation3, Rotation3, geometry};
 use nalgebra as na;
+use rand::Rng;
 
 pub struct MapManager{
     mapMatrix: DMatrix<String>
@@ -223,5 +224,29 @@ impl MapManager{
             }
         }
         return towerList;
+    }
+
+
+    /* 
+     * Finds and returns the position of all tiles with towers in the mapMatrix
+     * by looping through the mapMatrix... 
+     */
+    pub fn nextTowerLocation(&mut self)  -> Result<(f32,f32),&'static str> {
+        let mut freeList: Vec<(f32,f32)> = Vec::new();
+
+        for column in 0..self.mapMatrix.ncols(){
+            for row in 0..self.mapMatrix.nrows(){
+                if &self.mapMatrix[(row,column)] == "g" {
+                    freeList.push((column as f32,row as f32));
+                } 
+            }
+        }
+
+        if freeList.len() > 0 {
+            let nextTower = freeList[rand::thread_rng().gen_range(0..freeList.len())];
+            self.mapMatrix[(nextTower.1 as usize,nextTower.0 as usize)] = "t".to_string();
+            return Ok(nextTower);
+        }
+        return Err("no free tiles");
     }
 }

@@ -30,21 +30,9 @@ make enemy move along the road
 
 checkGame function
 
-towerAttackEvent
-takedamageEvent
-spawnProjectile function
-get obj file for projectile
-
 add transformations(?) for spawnEnemy and spawnProjectile
 
 spawnWaveOfEnemies
-
-spawn tower with key press on random empty tile
-
-For tomorrow:
-optimize the spawn functions (create help function for repetetive code)
-use help function in spawnTower, also fix scale and maybe rotation
-get obj
 
 */
 
@@ -153,6 +141,14 @@ impl GameManager{
             }   
 
             // On some key press, spawn tower on random empty tile
+            let space = self.window.get_key(Key::Space);
+            if matches!(space, Action::Press) {
+                let nextTowerLocation = self.mapManager.nextTowerLocation();
+                match nextTowerLocation {
+                    Ok(n) => self.spawnTower(n.0 ,0.5,n.1),
+                    Err(n) => println!("{}",n),
+                }                
+            }
 
             self.checkGame();
             
