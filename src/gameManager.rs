@@ -2,7 +2,9 @@ extern crate kiss3d;
 extern crate nalgebra as na;
 
 use ::nalgebra::{Translation3, Vector3};
+use rand::Rng;
 use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape};
+use std::ops::Not;
 use std::path::Path;
 use crate::ECS::Components::attackRateComponent::AttackRateComponent;
 use crate::ECS::Components::colliderComponent::ColliderComponent;
@@ -89,7 +91,7 @@ impl GameManager{
         self.nodeHandler.addNodes(TypeEnum::towerType, Path::new("src/resources/mushroom.obj"), Path::new("src/resources/mushroom.mtl"));
         self.nodeHandler.addNodes(TypeEnum::enemyType, Path::new("src/resources/bird.obj"), Path::new("src/resources/bird.mtl"));
         self.nodeHandler.addNodes(TypeEnum::baseType, Path::new("src/resources/castle-tower.obj"), Path::new("src/resources/castle-tower.mtl"));
-        // TODO: Add projectile here too
+        self.nodeHandler.addNodes(TypeEnum::projectileType, Path::new("src/resources/genji-shuriken.obj"), Path::new("src/resources/genji-shuriken.mtl"));
         
         // Initialize map
         self.mapManager.parseMap();
@@ -97,6 +99,7 @@ impl GameManager{
         self.createBase();
 
         self.window.set_light(Light::StickToCamera);
+        self.window.set_background_color(0.5, 0.7, 1.0)
         
     }
 
@@ -161,7 +164,6 @@ impl GameManager{
             
         }
 
-            //while self.window.render() {}
     }
 
 
@@ -219,7 +221,7 @@ impl GameManager{
             for coords in coordList{
                 self.spawnProjectile(xTarget as f32, yTarget as f32, zTarget as f32, 
                                         coords.0 as f32, self.enemyHeight as f32, coords.1 as f32);
-                println!("Spawn projectile!")
+                println!("Spawned projectile!")
 
             }
         }
@@ -241,35 +243,6 @@ impl GameManager{
     }
 
 
-    fn createRenderComponents(&mut self, id: usize, objectType: TypeEnum, x: f32, y: f32, z: f32, scale: f32){
-        let temp = self.nodeHandler.getNames(TypeEnum::baseType).unwrap();
-        let names = temp.clone();
-
-        let meshManager = self.nodeHandler.getMeshManager(objectType).unwrap();
-
-        let mut groupNode = self.window.add_group();
-
-        for name in names{
-            let mesh = meshManager.get(name.as_str()).unwrap();
-            groupNode.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
-        }
-        groupNode.set_local_translation(Translation3::new(x, y, z));
-        groupNode.set_local_scale(scale, scale, scale);
-        self.entityManager.addComponentToObject(id, RenderableComponent::new(groupNode));
-
-        // Add RigidBody to PhysicsManager and RigidBodyHandle to RigidBodyComponent (like an index) with a translation 
-        let body = RigidBodyBuilder::new(RigidBodyType::Dynamic);
-        let rigidBodyHandle = self.physicsManager.addRigidBody(body.translation(vector![x, y, z]).build());
-        self.entityManager.addComponentToObject(id, RigidBodyComponent::new(rigidBodyHandle));
-
-        // Add Collider to PhysicsManager and ColliderHandle to ColliderComponent (like an index) with a translation 
-        let collider = ColliderBuilder::new(ColliderShape::ball(1.0));
-        let collider = collider.translation(vector![x, y, z]).build();
-        let colliderHandle = self.physicsManager.addColliderWithParent(collider, rigidBodyHandle);
-        self.entityManager.addComponentToObject(id, ColliderComponent::new(colliderHandle));
-
-    }
-
 
     fn createBase(&mut self){
         let endCoords = self.mapManager.getEnd();
@@ -290,7 +263,7 @@ impl GameManager{
         self.entityManager.addComponentToObject(projectile, AttackDamageComponent::new(self.towerAttackDamage));
         self.entityManager.addComponentToObject(projectile, MoveComponent::new(5));
 
-        self.createRenderComponents(projectile, TypeEnum::projectileType,  xOrigin, yOrigin, zOrigin, 1.0);
+        self.createRenderComponents(projectile, TypeEnum::projectileType,  xOrigin, yOrigin, zOrigin, 0.06);
 
     }
 
@@ -301,20 +274,7 @@ impl GameManager{
         self.entityManager.addComponentToObject(tower, AttackDamageComponent::new(self.towerAttackDamage));
         self.entityManager.addComponentToObject(tower, AttackRateComponent::new(1));
 
-    
-        let temp = self.nodeHandler.getNames(TypeEnum::towerType).unwrap();
-        let names = temp.clone();
-
-        let meshManager = self.nodeHandler.getMeshManager(TypeEnum::towerType).unwrap();
-
-        let mut groupNode = self.window.add_group();
-
-        for name in names{
-            let mesh = meshManager.get(name.as_str()).unwrap();
-            groupNode.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
-        }
-        groupNode.set_local_translation(Translation3::new(x, y, z));
-        self.entityManager.addComponentToObject(tower, RenderableComponent::new(groupNode));
+        self.createRenderComponents(tower, TypeEnum::towerType, x, y, z, 0.6)
     }
 
 
@@ -332,6 +292,49 @@ impl GameManager{
 
         self.createRenderComponents(enemy, TypeEnum::enemyType, startCoords.0, self.enemyHeight, startCoords.1, 0.5);
     }
+
+
+    fn createRenderComponents(&mut self, id: usize, objectType: TypeEnum, x: f32, y: f32, z: f32, scale: f32){
+        let temp = self.nodeHandler.getNames(objectType).unwrap();
+        let names = temp.clone();
+
+        let meshManager = self.nodeHandler.getMeshManager(objectType).unwrap();
+
+        let mut groupNode = self.window.add_group();
+
+        for name in names{
+            let mesh = meshManager.get(name.as_str()).unwrap();
+            groupNode.add_mesh(mesh, Vector3::new(1.0, 1.0, 1.0));
+        }
+        groupNode.set_local_translation(Translation3::new(x, y, z));
+        groupNode.set_local_scale(scale, scale, scale);
+        if matches!(objectType, TypeEnum::enemyType){
+            groupNode.set_color(rand::thread_rng().gen_range(0.0..0.2), rand::thread_rng().gen_range(0.0..0.2), rand::thread_rng().gen_range(0.0..0.2));
+        }
+        else if matches!(objectType, TypeEnum::projectileType){
+            groupNode.set_color(0.2, 0.2, 0.2);
+        }
+        else{
+            groupNode.set_color(rand::thread_rng().gen_range(0.0..1.0), rand::thread_rng().gen_range(0.0..1.0), rand::thread_rng().gen_range(0.0..1.0));
+        }
+        
+        self.entityManager.addComponentToObject(id, RenderableComponent::new(groupNode));
+
+        if matches!(objectType, TypeEnum::towerType).not(){
+            // Add RigidBody to PhysicsManager and RigidBodyHandle to RigidBodyComponent (like an index) with a translation 
+            let body = RigidBodyBuilder::new(RigidBodyType::Dynamic);
+            let rigidBodyHandle = self.physicsManager.addRigidBody(body.translation(vector![x, y, z]).build());
+            self.entityManager.addComponentToObject(id, RigidBodyComponent::new(rigidBodyHandle));
+
+            // Add Collider to PhysicsManager and ColliderHandle to ColliderComponent (like an index) with a translation 
+            let collider = ColliderBuilder::new(ColliderShape::ball(1.0));
+            let collider = collider.translation(vector![x, y, z]).build();
+            let colliderHandle = self.physicsManager.addColliderWithParent(collider, rigidBodyHandle);
+            self.entityManager.addComponentToObject(id, ColliderComponent::new(colliderHandle));
+        }
+
+    }
+
 }
 
 
@@ -341,7 +344,8 @@ pub fn test(){
     gm.initialize();
 
     gm.spawnEnemy();
-    gm.spawnTower(2.0, 0.4, 4.0);
+    gm.spawnTower(2.0, 0.3, 4.0);
+    gm.spawnProjectile(5.0, 5.0, 5.0, 3.0, 1.0, 10.0);
 
     gm.gameloop();
 
