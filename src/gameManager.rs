@@ -75,6 +75,9 @@ impl GameManager{
             ("enemyAttackDamage", 1.0),
             ("enemyHeight", 1.0),
             ("towerHeight", 0.3),
+            ("enemySpeed", 1.0),
+            ("projectileSpeed", 10.0),
+            ("towerAttackRate", 3.0),  // How many seconds between each attack
         ]);
         Self {
             entityManager: EntityManager::new(),
@@ -121,7 +124,7 @@ impl GameManager{
             loop {
                 let val = String::from("kill enemies now please :)");
                 txTowerAttack.send(val).unwrap();
-                thread::sleep(Duration::from_millis(5000));
+                thread::sleep(Duration::from_millis(3000));     // Set to same as towerAttackRate
             }
         });
 
@@ -326,6 +329,7 @@ impl GameManager{
         let base = self.entityManager.newObject();
         self.entityManager.addComponentToObject(base, TypeComponent::new(TypeEnum::baseType));
         self.entityManager.addComponentToObject(base, HealthComponent::new(20));
+        self.entityManager.addComponentToObject(base, MoveComponent::new(0.0));
 
         self.createRenderComponent(base, TypeEnum::baseType, endCoords.0, 0.2, endCoords.1, 0.007);
         self.createRigidBodyAndColliderComponents(base, TypeEnum::baseType, endCoords.0, 0.2, endCoords.1, (0.0, 0.0, 0.0));
@@ -338,9 +342,9 @@ impl GameManager{
         let projectile = self.entityManager.newObject();
         self.entityManager.addComponentToObject(projectile, TypeComponent::new(TypeEnum::projectileType));
         self.entityManager.addComponentToObject(projectile, AttackDamageComponent::new(*self.gameParameters.get("towerAttackDamage").unwrap()));
-        self.entityManager.addComponentToObject(projectile, MoveComponent::newWithTarget(20.0, (xTarget, yTarget, zTarget)));
+        self.entityManager.addComponentToObject(projectile, MoveComponent::new(*self.gameParameters.get("projectileSpeed").unwrap()));
 
-        let speed = 20.0;
+        let speed = *self.gameParameters.get("projectileSpeed").unwrap();
         
         let pythagoras = ((xTarget-xOrigin).powf(2.0)+(yTarget-yOrigin).powf(2.0)+(zTarget-zOrigin).powf(2.0)).sqrt();
         let xVelocity = (xTarget-xOrigin) * speed / pythagoras;
@@ -356,9 +360,9 @@ impl GameManager{
         let tower = self.entityManager.newObject();
         self.entityManager.addComponentToObject(tower, TypeComponent::new(TypeEnum::towerType));
         self.entityManager.addComponentToObject(tower, AttackDamageComponent::new(*self.gameParameters.get("towerAttackDamage").unwrap()));
-        self.entityManager.addComponentToObject(tower, AttackRateComponent::new(1));
+        self.entityManager.addComponentToObject(tower, AttackRateComponent::new(*self.gameParameters.get("towerAttackRate").unwrap()));    // Do we even use this??
 
-        self.createRenderComponent(tower, TypeEnum::towerType, x, y, z, 0.6)
+        self.createRenderComponent(tower, TypeEnum::towerType, x, y, z, 0.6);
     }
 
 

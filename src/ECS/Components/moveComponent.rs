@@ -5,7 +5,6 @@ pub struct MoveComponent{
     speed: f32,
     // Path list containing points in a sequence that represent where the object should move
     path: VecDeque<(i32,i32)>,
-    target: (f32, f32, f32),
 }
 
 impl MoveComponent{
@@ -13,14 +12,12 @@ impl MoveComponent{
         Self {
             speed: spd,
             path: VecDeque::from(pth),
-            target: (0.0, 0.0, 0.0),
         }
     }
-    pub fn newWithTarget(spd: f32, target: (f32, f32, f32)) -> Self {
+    pub fn new(spd: f32) -> Self {
         Self {
             speed: spd,
             path: VecDeque::new(),
-            target: target,
         }
     }
 
@@ -49,9 +46,6 @@ impl MoveComponent{
         self.speed = speed;
     }
 
-    pub fn getTarget(&self) -> (f32, f32, f32){
-        return self.target;
-    }
 }
 
 
