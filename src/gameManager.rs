@@ -1,6 +1,7 @@
 extern crate kiss3d;
 extern crate nalgebra as na;
 
+use kiss3d::camera::FirstPerson;
 use kiss3d::text::Font;
 use ::nalgebra::{Translation3, Vector3};
 use rand::Rng;
@@ -122,6 +123,10 @@ impl GameManager{
 
     pub fn gameloop(&mut self){
 
+        let eye = Point3::new(10.0f32, 10.0, 10.0);
+        let at = Point3::origin();
+        let mut first_person = FirstPerson::new(eye, at);
+
         // thread for towers to attack
         let (txTowerAttack, rxTowerAttack) = mpsc::channel();
         thread::spawn(move || {
@@ -209,8 +214,14 @@ impl GameManager{
 
             self.updateNodes();
 
-            let collision = self.physicsManager.getEvent().unwrap();
-            self.collisionEvent(collision);
+
+            // let collision = self.physicsManager.getEvent();
+            // match collision{
+            //     Some(collision) => self.collisionEvent(collision),
+            //     None => (),
+            // }
+            
+            
 
             if matches!(self.gameState, GameStateEnum::won){
                 let font = Font::default();
@@ -223,15 +234,15 @@ impl GameManager{
                 self.window.draw_text("You lost! :(", &pos, 250.0, &font, &Point3::new(0.0, 0.0, 0.4));
             }
 
-            self.window.render();
+            self.window.render_with_camera(&mut first_person);
         }
     }
 
 
-    fn collisionEvent(&self, collision: CollisionEvent){
+    fn collisionEvent(&mut self, collision: CollisionEvent){
         let collider1 = collision.collider1();
         let collider2 = collision.collider2();
-        let types: Vec<TypeEnum> = Vec::new();
+        let mut types: Vec<(TypeEnum, &mut IdComponent,&mut AttackDamageComponent)> = Vec::new();
 
         let mut colliderCompList = self.entityManager.borrowComponentVecMut::<ColliderComponent>().unwrap();
         let mut idCompList = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
@@ -243,7 +254,53 @@ impl GameManager{
         /* Loop through all objects and if it's an enemy then move it */
         for (colliderComp, idComp, typeComp, damageComp) in iter{
             if colliderComp.getColliderHandle().0 == collider1.0{ 
-                
+                types.push((typeComp.getType(), idComp, damageComp));
+            }
+            else if colliderComp.getColliderHandle().0 == collider2.0{ 
+                types.push((typeComp.getType(), idComp, damageComp));
+            }
+        }
+
+        let obj1 = types.pop().unwrap();
+        let obj2 = types.pop().unwrap();
+
+        if matches!(obj1.0, TypeEnum::enemyType){
+            if matches!(obj2.0, TypeEnum::projectileType){
+                println!("enemy & projectile");
+                self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj1.1.getId(), damage: obj2.2.getAttackDamage() as usize});
+                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId() });
+            }
+            else if matches!(obj2.0, TypeEnum::baseType){
+                println!("enemy & base");
+                self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj2.1.getId(), damage: obj1.2.getAttackDamage() as usize});
+                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId() });
+            }
+        }
+
+        if matches!(obj1.0, TypeEnum::projectileType){
+            if matches!(obj2.0, TypeEnum::enemyType){
+                println!("projectile & enemy");
+                self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj2.1.getId(), damage: obj1.2.getAttackDamage() as usize});
+                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId() });
+            }
+            else if matches!(obj2.0, TypeEnum::wallType){
+                println!("projectile & wall");
+                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId() });
+            }
+        }
+
+        if matches!(obj1.0, TypeEnum::baseType){
+            if matches!(obj2.0, TypeEnum::enemyType){
+                println!("base & enemy");
+                self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj1.1.getId(), damage: obj2.2.getAttackDamage() as usize});
+                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId() });
+            }
+        }
+
+        if matches!(obj1.0, TypeEnum::wallType){
+            if matches!(obj2.0, TypeEnum::projectileType){
+                println!("wall & projectile");
+                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId() });
             }
         }
 
