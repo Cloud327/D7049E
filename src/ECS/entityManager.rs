@@ -1,4 +1,4 @@
-use super::{componentVec::ComponentVec, Components::idComponent::IdComponent};
+use super::{componentVec::ComponentVec, Components::{idComponent::IdComponent, healthComponent::HealthComponent, attackRateComponent::AttackRateComponent}};
 use std::{cell::{RefCell, RefMut}};
 
 
@@ -53,6 +53,7 @@ impl EntityManager{
 
         // step 2: remove at index
         for componentVec in self.componentVecs.iter_mut() {
+            // println!("removing somethinh at target {target} in entityManager {}",0);
             componentVec.removeAt(target); 
         }
     }
@@ -74,7 +75,8 @@ impl EntityManager{
                 .asAnyMut()               
                 .downcast_mut::<RefCell<Vec<Option<IdComponent>>>>()
             {
-                componentVec.get_mut()[object] = Some(IdComponent::new(object));
+                let target = componentVec.get_mut().len()-1;
+                componentVec.get_mut()[target] = Some(IdComponent::new(object));
                 return;
             }
         }
@@ -107,14 +109,21 @@ impl EntityManager{
         component: ComponentType,
     ) {
         let mut idCompList = self.borrowComponentVecMut::<IdComponent>().unwrap();
+        let len = idCompList.len();
+
         let iter = idCompList.iter_mut().filter_map(|id| Some(id.as_mut()?));
         let mut target = 0; // use this to find the targetIds index in the idCompList
         for id in iter{
+            // if targetId >= len {
+            // }
             if id.getId() == targetId{
                 break;
+            } else {
+                target += 1;
             }
-            target += 1;
         }
+        println!("targetId: {targetId}, target: {target}, len: {len}");
+        
         drop(idCompList);
         
         // add component to the correct (if already existing) componentVec
@@ -123,21 +132,22 @@ impl EntityManager{
                 .asAnyMut()               
                 .downcast_mut::<RefCell<Vec<Option<ComponentType>>>>()
             {
+                println!("len of componentVec: {}",componentVec.get_mut().len());
                 componentVec.get_mut()[target] = Some(component);
                 return;
             }
         }
         // No matching component storage exists yet, so we have to make one.
         let mut newComponentVec: Vec<Option<ComponentType>> =
-        Vec::with_capacity(self.componentVecs.len());
+        Vec::with_capacity(len+1);
 
         // All existing entities don't have this component, so we give them `None`
-        for _ in 0..self.componentVecs.len() {
+        for _ in 0..len+1{
             newComponentVec.push(None);
         }
 
         // Give this object the Component.
-        newComponentVec.push(Some(component));
+        newComponentVec[target] = Some(component);
         self.componentVecs.push(Box::new(RefCell::new(newComponentVec)));
 
     }

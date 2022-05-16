@@ -32,10 +32,18 @@ impl MoveComponent{
     }
 
     /* Pops the current next point and returns the new next point in the path list */ 
-    pub fn popAndGetNextPoint(&mut self) -> (f32, f32){
+    // pub fn popAndGetNextPoint(&mut self) -> (f32, f32){
+    //     self.path.pop_front();
+    //     let point = self.path.front().unwrap();
+    //     return (point.0 as f32, point.1 as f32)
+    // }
+    pub fn popAndGetNextPoint(&mut self) -> Option<(f32, f32)>{
+        if self.path.len() == 1 {
+            return None
+        }
         self.path.pop_front();
         let point = self.path.front().unwrap();
-        return (point.0 as f32, point.1 as f32)
+        return Some((point.0 as f32, point.1 as f32))
     }
     
     pub fn getSpeed(&self) -> f32{
