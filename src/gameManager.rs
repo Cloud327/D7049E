@@ -24,6 +24,7 @@ use kiss3d::light::Light;
 use kiss3d::event::{Key, MouseButton, WindowEvent};
 
 use rapier3d::na::{self as nalgebra};
+use rapier3d::prelude::AngVector;
 use na::{Matrix4, vector, UnitQuaternion, Point2, Point3};
 
 use std::thread::{self, JoinHandle};
@@ -32,21 +33,21 @@ use std::sync::{Arc, Mutex, mpsc};
 
 /*
 TODO:
-fix rotations for enemies along the road 
 
 collision events for:
     enemy - projectile
         send takeDamageEvent to enemy and remove the projectile
     enemy - base
         send takeDamageEvent to base and remove the enemy
+    outer wall - projectile
+        remove the projectile
 
-fix timer or boundries for projectiles?
+create collider walls
 
-checkGame function
+checkEnemies function, fix game won condition
+add game lost condition somewhere
 
 spawnWaveOfEnemies
-
-make game parameters into a single global variable
 
 if base's healthComponent = 0:      // Make sure we don't delete base object before saying game over
     game over
@@ -64,7 +65,6 @@ pub struct GameManager{
     nodeHandler: NodeHandler,
     gameState: GameStateEnum,
     gameParameters: HashMap<&'static str, f32>,
-
 }
 
 
@@ -77,7 +77,7 @@ impl GameManager{
             ("towerHeight", 0.3),
             ("enemySpeed", 1.0),
             ("projectileSpeed", 10.0),
-            ("towerAttackRate", 3.0),  // How many seconds between each attack
+            ("towerAttackRate", 4.0),  // How many seconds between each attack
         ]);
         Self {
             entityManager: EntityManager::new(),
@@ -111,6 +111,8 @@ impl GameManager{
             self.spawnTower(coords.0, *self.gameParameters.get("towerHeight").unwrap(), coords.1);
         }
 
+        // TODO: Create outer walls
+
         self.window.set_light(Light::StickToCamera);
         self.window.set_background_color(0.5, 0.7, 1.0);
         
@@ -124,7 +126,40 @@ impl GameManager{
             loop {
                 let val = String::from("kill enemies now please :)");
                 txTowerAttack.send(val).unwrap();
-                thread::sleep(Duration::from_millis(3000));     // Set to same as towerAttackRate
+                thread::sleep(Duration::from_millis(4000));     // Set to same as towerAttackRate
+            }
+        });
+
+        // // thread for starting waves,,, TODO: REMOVE KILL EXTERMINATE, this will be done from somewhere else
+        let (spawnEnemySender, spawnEnemyReciever) = mpsc::channel();
+        let (nextWaveSender, nextWaveReciever) = mpsc::channel();
+        thread::spawn(move ||{
+            loop {
+                // wait 2000 ms and then start next wave
+                thread::sleep(Duration::from_millis(5000));
+                nextWaveSender.send(true).unwrap();
+            }
+        });
+        
+        // thread for bird spawning
+        thread::spawn(move || {
+            let mut waveCounter = 0;
+            let mut waveNumberEnemies = 2;
+            loop {
+                // only spawn a wave when told to do so by nextWaveReciever
+                // wait until we recieve a call do spawn a wave
+                nextWaveReciever.recv().unwrap(); 
+
+                // spawns waveNumberEnemies enemies with 200 ms between each, 
+                println!("wave {waveCounter} with {waveNumberEnemies} enemies");
+                for _ in 0..waveNumberEnemies{
+                    spawnEnemySender.send(true).unwrap();
+                    thread::sleep(Duration::from_millis(2000));
+                }
+
+                // keep track of how many enemies to spawn and wavecounter
+                waveNumberEnemies += 2;
+                waveCounter += 1;
             }
         });
 
@@ -134,6 +169,13 @@ impl GameManager{
             let receivedTowerAttack = rxTowerAttack.try_recv();
             match receivedTowerAttack {
                 Ok(_) => self.checkEnemies(),
+                Err(_) => (),
+            }
+
+            // spawn an enemy whenever we recieve a spawnEnemy call from the bird spawining thread
+            let doSpawnEnemy = spawnEnemyReciever.try_recv();
+            match doSpawnEnemy {
+                Ok(_) => self.spawnEnemy(),
                 Err(_) => (),
             }
 
@@ -268,18 +310,27 @@ impl GameManager{
         /* Loop through all objects and if it's an enemy then move it */
         for (renderComp, rigidComp, typeComp, moveComp) in iter {
             if matches!(typeComp.getType(), TypeEnum::enemyType){
-                //moveEnemy()
                 let node = renderComp.getSceneNode();
-
                 let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
-                //self.moveEnemy(rigidComp, moveComp);
 
                 // Retrieves the rigidBody coordinates
                 let t = GameManager::moveEnemy(rigidBody, moveComp);
+                let r = rigidBody.rotation().clone();
+
+                let axis;
+                match r.axis() {
+                    Some(n) => axis = n[1],
+                    None => axis = 0.0, // why the hell would you return a None if the axis is zero ????????
+                }
+
+                let mut axisangle = Vector3::y();
+                axisangle[1] = axisangle[1]* axis * r.angle();
+                let r = UnitQuaternion::new(axisangle);
 
                 //let t = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).translation();
                 // Sets the renderableComponent node coordinates to the rigidBody coordinates
                 node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
+                node.write().unwrap().set_local_rotation(r);
             }
             if matches!(typeComp.getType(), TypeEnum::projectileType){
                 let node = renderComp.getSceneNode();
@@ -292,34 +343,28 @@ impl GameManager{
     }
 
 
-    fn moveEnemy(rigidBody: &mut RigidBody, moveComp: &mut MoveComponent) -> (f32, f32, f32){
-        
+    fn moveEnemy(rigidBody: &mut RigidBody, moveComp: &mut MoveComponent) -> (f32, f32, f32){ 
         let mut nextPoint = moveComp.getNextPoint();
-        let speed = moveComp.getSpeed();
         let t = (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
         // If the enemy is located near enough the next point, then remove it and use the new next point in the sequence
         if  (nextPoint.0 - 0.3) < t.0 && t.0 < (nextPoint.0 + 0.3) && (nextPoint.1 - 0.3) < t.2 && t.2 < (nextPoint.1 + 0.3){
             nextPoint = moveComp.popAndGetNextPoint();
         }
 
-        let mut velocity = (0.0, 0.0, 0.0);
-        if t.0 < nextPoint.0{
-            velocity.0 = speed;
-            
-        } else if t.0 > nextPoint.0{
-            velocity.0 = -speed;
-        }
+        let speed = moveComp.getSpeed() as f32;
+        let pythagoras = ((nextPoint.0 - t.0).powf(2.0)+(nextPoint.1 - t.2).powf(2.0)).sqrt();
 
-        if t.2 < nextPoint.1 {
-            velocity.2 = speed;
-        } else if t.2 > nextPoint.1 {
-            velocity.2 = -speed;
-        }
+        let xVelocity = (nextPoint.0 - t.0) * speed / pythagoras;
+        let yVelocity = 0.0; //(yTarget-yOrigin) * speed / pythagoras;
+        let zVelocity = (nextPoint.1 - t.2) * speed / pythagoras;
 
-        rigidBody.set_linvel(vector![velocity.0, velocity.1, velocity.2], true);
+        rigidBody.set_linvel(vector![xVelocity,yVelocity,zVelocity], true);
 
+        let theta = ((xVelocity).atan2(zVelocity))  * 1.0;
+        let axisangle = AngVector::new(0.0,theta,0.0);
+
+        rigidBody.set_rotation(axisangle, true);
         return (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
-
     }
 
 
@@ -372,7 +417,7 @@ impl GameManager{
         self.entityManager.addComponentToObject(enemy, TypeComponent::new(TypeEnum::enemyType));
         self.entityManager.addComponentToObject(enemy, AttackDamageComponent::new(*self.gameParameters.get("enemyAttackDamage").unwrap()));
         self.entityManager.addComponentToObject(enemy, HealthComponent::new(30));
-        self.entityManager.addComponentToObject(enemy, MoveComponent::newWithPath(1.0, self.mapManager.findPath().unwrap()));
+        self.entityManager.addComponentToObject(enemy, MoveComponent::newWithPath(*self.gameParameters.get("enemySpeed").unwrap(), self.mapManager.findPath().unwrap()));
         
         let startCoords = self.mapManager.getStart();
         self.createRenderComponent(enemy, TypeEnum::enemyType, startCoords.0, *self.gameParameters.get("enemyHeight").unwrap(), startCoords.1, 0.5);
