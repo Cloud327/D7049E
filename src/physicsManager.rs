@@ -24,12 +24,17 @@ pub struct PhysicsManager{
 
 
 impl PhysicsManager{
-    pub fn new() -> Self {
+    pub fn new(gravity: Option<(f32, f32, f32)>) -> Self {
         let (sender, reciever) = crossbeam::channel::unbounded();
         let event_handler = ChannelEventCollector::new(sender);
+        let mut g;
+        match gravity{
+            Some(x) => g = vector![x.0, x.1, x.2],
+            None => g = vector![0.0, 0.0, 0.0]
+        }
         Self {
             /* Create other structures necessary for the simulation. */
-            gravity: vector![0.0, -9.81, 0.0],
+            gravity: g,
             //gravity: vector![0.0, -1.62, 0.0],
             integrationParameters: IntegrationParameters::default(),
             physicsPipeline: PhysicsPipeline::new(),
