@@ -4,6 +4,7 @@ extern crate nalgebra as na;
 use kiss3d::text::Font;
 use ::nalgebra::{Translation3, Vector3};
 use rand::Rng;
+use rapier3d::math::AngVector;
 use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody};
 use std::ops::Not;
 use std::path::Path;
@@ -17,17 +18,16 @@ use crate::gameStateEnum::GameStateEnum;
 use crate::mapManager::MapManager;
 use crate::nodeHandler::NodeHandler;
 use crate::physicsManager::PhysicsManager;
-use kiss3d::scene::SceneNode;
 use kiss3d::{window::Window, event::Action};
 use kiss3d::light::Light;
-use kiss3d::event::{Key, MouseButton, WindowEvent};
+use kiss3d::event::{Key};
 
-use rapier3d::na::{self as nalgebra};
-use na::{Matrix4, vector, UnitQuaternion, Point2, Point3};
+use rapier3d::na::{self as nalgebra, Vector1};
+use na::{vector, Point2, Point3, Matrix, ArrayStorage, Const, Quaternion, Unit, UnitQuaternion};
 
-use std::thread::{self, JoinHandle};
+use std::thread::{self};
 use std::time::Duration;
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::{mpsc};
 
 /*
 TODO:
@@ -106,7 +106,6 @@ impl GameManager{
     }
 
     pub fn gameloop(&mut self){
-
         // thread for towers to attack
         let (txTowerAttack, rxTowerAttack) = mpsc::channel();
         thread::spawn(move || {
@@ -116,10 +115,50 @@ impl GameManager{
                 thread::sleep(Duration::from_millis(10000));
             }
         });
+        
+        // // thread for starting waves,,, TODO: REMOVE KILL EXTERMINATE, this will be done from somewhere else
+        let (spawnEnemySender, spawnEnemyReciever) = mpsc::channel();
+        let (nextWaveSender, nextWaveReciever) = mpsc::channel();
+        thread::spawn(move ||{
+            loop {
+                // wait 2000 ms and then start next wave
+                thread::sleep(Duration::from_millis(5000));
+                nextWaveSender.send(true).unwrap();
+            }
+        });
+        
+        // thread for bird spawning
+        thread::spawn(move || {
+            let mut waveCounter = 0;
+            let mut waveNumberEnemies = 1;
+            loop {
+                // only spawn a wave when told to do so by nextWaveReciever
+                // wait until we recieve a call do spawn a wave
+                nextWaveReciever.recv().unwrap(); 
 
-        loop{
+                // spawns waveNumberEnemies enemies with 200 ms between each, 
+                println!("wave {waveCounter} with {waveNumberEnemies} enemies");
+                for _ in 0..waveNumberEnemies{
+                    spawnEnemySender.send(true).unwrap();
+                    thread::sleep(Duration::from_millis(1000));
+                }
 
-            // Check TowerAttack thread for receives
+                // keep track of how many enemies to spawn and wavecounter
+                waveNumberEnemies += 2;
+                waveCounter += 1;
+
+            }
+        });
+
+        // actual gameloop
+        loop {
+            // spawn an enemy whenever we recieve a spawnEnemy call from the bird spawining thread
+            let doSpawnEnemy = spawnEnemyReciever.try_recv();
+            // match doSpawnEnemy {
+                // Ok(_) => self.spawnEnemy(),
+            //     Err(_) => (),
+            // }
+
             let receivedTowerAttack = rxTowerAttack.try_recv();
             match receivedTowerAttack {
                 Ok(_) => self.checkEnemies(),
@@ -135,19 +174,24 @@ impl GameManager{
             if matches!(escape, Action::Press){
                 break;
             }   
-
+			
+			
             // On some key press, spawn tower on random empty tile
             let space = self.window.get_key(Key::Space);
             if matches!(space, Action::Press) {
                 let nextTowerLocation = self.mapManager.nextTowerLocation();
                 match nextTowerLocation {
-                    Ok(n) => self.spawnTower(n.0 ,0.5,n.1),
+                    Ok(n) => self.spawnTower(n.0 ,0.3,n.1),
                     Err(n) => println!("{}",n),
                 }                
             }
 
-            //self.checkGame();
+            let key1 = self.window.get_key(Key::Key1);
+            if matches!(key1, Action::Press) {       
+            }
 
+            // self.checkGame(nextWaveSender);
+            
             while !self.eventManager.eventBufferIsEmpty(){
                 self.doEvent();
             }
@@ -170,6 +214,7 @@ impl GameManager{
             
         }
 
+            //while self.window.render() {}
     }
 
 
@@ -273,10 +318,41 @@ impl GameManager{
 
                 // Retrieves the rigidBody coordinates
                 let t = GameManager::moveEnemy(rigidBody, moveComp);
+                let r = rigidBody.rotation().clone();
+
+                // println!("{}",r.axis());
+                let axis;
+                match r.axis() {
+                    Some(n) => axis = n[1],
+                    None => axis = 0.0, // why the hell would you return a None if the axis is zero ????????
+                }
+
+                let mut axisangle = Vector3::y();
+                axisangle[1] = axisangle[1]* axis * r.angle();
+                let r = UnitQuaternion::new(axisangle);
+
+                println!("{}",rigidBody.rotation());
+                println!("{}",r);
+
 
                 //let t = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).translation();
                 // Sets the renderableComponent node coordinates to the rigidBody coordinates
                 node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
+                node.write().unwrap().set_local_rotation(r);
+
+
+
+                // trying to do rotation, dont mind me
+                // let nextPoint = moveComp.getNextPoint();
+
+                // let theta = (0.0 - t.0 + nextPoint.0 /0.0 - t.2 + nextPoint.1).atan();
+                // let axisangle = Matrix::<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>>::new(0.0, theta, 0.0);
+                // let rot = Rotation3::new(axisangle).into();
+                // println!("{theta}");
+                // println!("{rot}");
+                // node.write().unwrap().set_local_rotation(rot)   //set_rotation(vector!(0.0,theta,0.0), true);
+
+
             }
             
         }
@@ -292,21 +368,53 @@ impl GameManager{
             nextPoint = moveComp.popAndGetNextPoint();
         }
 
-        let mut velocity = (0.0, 0.0, 0.0);
-        if t.0 < nextPoint.0{
-            velocity.0 = 0.01;
+        let speed = moveComp.getSpeed() as f32;
+        let speed = 4.0;
+
+        let pythagoras = ((nextPoint.0 - t.0).powf(2.0)+(nextPoint.1 - t.2).powf(2.0)).sqrt();
+
+        let xVelocity = (nextPoint.0 - t.0) * speed / pythagoras;
+        let yVelocity = 0.0; //(yTarget-yOrigin) * speed / pythagoras;
+        let zVelocity = (nextPoint.1 - t.2) * speed / pythagoras;
+
+        rigidBody.set_linvel(vector![xVelocity,yVelocity,zVelocity], true);
+
+        // let mut velocity = (0.0, 0.0, 0.0);
+        // if (t.0 ) < (nextPoint.0) {
+        //     velocity.0 = 1.0;
             
-        } else if t.0 > nextPoint.0{
-            velocity.0 = -0.01;
-        }
+        // } else if (t.0 )  > (nextPoint.0 ) {
+        //     velocity.0 = -1.0;
+        // }
 
-        if t.2 < nextPoint.1 {
-            velocity.2 = 0.01;
-        } else if t.2 > nextPoint.1 {
-            velocity.2 = -0.01;
-        }
+        // if (t.2 ) < (nextPoint.1 )  {
+        //     velocity.2 = 1.0;
+        // } else if (t.2 )  > (nextPoint.1 ) {
+        //     velocity.2 = -1.0;
+        // }
 
-        rigidBody.set_linvel(vector![velocity.0, velocity.1, velocity.2], true);
+        // rigidBody.set_linvel(vector![velocity.0, velocity.1, velocity.2], true);
+
+
+
+
+        let theta = ((xVelocity).atan2(zVelocity))  * 1.0;
+        // let theta = zVelocity.atan2(xVelocity);
+        // let axisangle = Matrix::<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>>::new(0.0, theta, 0.0);
+        // let axisangle = vector![axisangle[0],axisangle[1],axisangle[2]];
+        // let axisangle = vector![0.0,theta,0.0];
+        let axisangle = AngVector::new(0.0,theta,0.0);
+        // let rot = AngVector::new(velocity.0, velocity.1, velocity.2);//Rotation3::new(axisangle);
+        // println!("{}",vector![velocity.0, velocity.1, velocity.2]);
+        // println!("xvel{}",xVelocity);
+        // println!("zvel{}",zVelocity);
+        // println!("{}",(xVelocity) / (zVelocity));
+
+
+        rigidBody.set_rotation(axisangle, true);
+
+        // println!("{}",rigidBody.rotation());
+
 
         return (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
 
@@ -398,7 +506,7 @@ impl GameManager{
 
             // Add Collider to PhysicsManager and ColliderHandle to ColliderComponent (like an index) with a translation 
             let collider = ColliderBuilder::new(ColliderShape::ball(1.0));
-            let collider = collider.translation(vector![x, y, z]).build();
+            let collider = collider.translation(vector![x, y, z]).sensor(true).build();
             let colliderHandle = self.physicsManager.addColliderWithParent(collider, rigidBodyHandle);
             self.entityManager.addComponentToObject(id, ColliderComponent::new(colliderHandle));
         }
@@ -413,6 +521,7 @@ pub fn test(){
     let mut gm = GameManager::new();
     gm.initialize();
 
+    gm.spawnEnemy();
     gm.spawnEnemy();
     //gm.spawnTower(2.0, 0.3, 4.0);
     //gm.spawnProjectile(5.0, 5.0, 5.0, 3.0, 1.0, 10.0);
