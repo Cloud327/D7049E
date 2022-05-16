@@ -2,19 +2,19 @@ use std::collections::VecDeque;
 
 
 pub struct MoveComponent{
-    speed: usize,
+    speed: f32,
     // Path list containing points in a sequence that represent where the object should move
-    path: VecDeque<(i32,i32)> 
+    path: VecDeque<(i32,i32)>,
 }
 
 impl MoveComponent{
-    pub fn newWithPath(spd: usize, pth: Vec<(i32, i32)>) -> Self {
+    pub fn newWithPath(spd: f32, pth: Vec<(i32, i32)>) -> Self {
         Self {
             speed: spd,
-            path: VecDeque::from(pth)
+            path: VecDeque::from(pth),
         }
     }
-    pub fn new(spd: usize) -> Self {
+    pub fn new(spd: f32) -> Self {
         Self {
             speed: spd,
             path: VecDeque::new(),
@@ -38,13 +38,14 @@ impl MoveComponent{
         return (point.0 as f32, point.1 as f32)
     }
     
-    pub fn getSpeed(&self) -> usize{
+    pub fn getSpeed(&self) -> f32{
         return self.speed;
     }
 
-    pub fn setSpeed(&mut self, speed:usize){
+    pub fn setSpeed(&mut self, speed:f32){
         self.speed = speed;
     }
+
 }
 
 

@@ -1,10 +1,10 @@
 
 pub struct AttackDamageComponent{
-    attackDamage: usize,
+    attackDamage: f32,
 }
 
 impl AttackDamageComponent{
-    pub fn new(attackDamage: usize) -> Self {
+    pub fn new(attackDamage: f32) -> Self {
         Self{
             attackDamage: attackDamage,
         }
@@ -14,20 +14,20 @@ impl AttackDamageComponent{
 
     }
 
-    pub fn getAttackDamage(&self) -> usize{
+    pub fn getAttackDamage(&self) -> f32{
         return self.attackDamage;
     }
 
 
-    pub fn setAttackDamage(&mut self, attackDamage: usize){
+    pub fn setAttackDamage(&mut self, attackDamage: f32){
         self.attackDamage = attackDamage;
     }
 }
 
 
 pub fn test(){
-    let mut attackComponent = AttackDamageComponent{attackDamage:5};
+    let mut attackComponent = AttackDamageComponent{attackDamage:5.0};
     println!("AttackDamage at creation: {}",attackComponent.getAttackDamage());
-    attackComponent.setAttackDamage(10);
+    attackComponent.setAttackDamage(10.0);
     println!("AttackDamage after change: {}", attackComponent.getAttackDamage());
 }
