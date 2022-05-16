@@ -10,12 +10,13 @@ mod mapManager;
 mod ECS;
 mod colliderTest;
 mod gameStateEnum;
+mod removeObjectTest;
 
 
 fn main() {
 
-    gameManager::test();
-    //colliderTest::run();
+    //gameManager::test();
+    removeObjectTest::run();
 
 
     //assetTest::test();

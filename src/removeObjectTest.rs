@@ -86,8 +86,8 @@ pub fn run() {
              }
             
           }
-          println!("Index to remove: {}", collisionEvent.collider2().0.into_raw_parts().0);
-          physicsManager.removeRigidBodyWithCollider(collisionEvent.collider1().0);
+          println!("Index to remove?: {}", collisionEvent.collider2().0.into_raw_parts().0);
+          physicsManager.removeRigidBodyWithCollider(collisionEvent.collider2().0);
         }
         
       }

@@ -1,14 +1,17 @@
+use kiss3d::window::Window;
 use rapier3d::{prelude::*, crossbeam};
 use rapier3d::pipeline::ActiveEvents;
 
 use crate::physicsManager::PhysicsManager;
 
 pub fn run() {
-  let mut physicsManager = PhysicsManager::new();
+  let mut physicsManager = PhysicsManager::new((0.0, -9.81, 0.0));
+  let mut window = Window::new("Collider test");
 
   /* Create the ground. */
   let collider = ColliderBuilder::cuboid(100.0, 0.1, 100.0).build();
   physicsManager.addCollider(collider);
+  window.add_cube(10.0, 10.0, 10.0).set_color(0.7, 0.3, 0.9);
 
   /* Create the bounding ball. */
   let rigid_body = RigidBodyBuilder::dynamic()
@@ -23,6 +26,7 @@ pub fn run() {
   for _ in 0..200 {
     physicsManager.step();
     physicsManager.getEvent();
+    window.render();
 
     let ball_body = physicsManager.getRigidBody(ball_body_handle);
     println!(

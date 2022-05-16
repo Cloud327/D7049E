@@ -2,17 +2,19 @@ extern crate kiss3d;
 extern crate nalgebra as na;
 
 
+use kiss3d::camera;
 use kiss3d::window::{Canvas, CanvasSetup, NumSamples};
 use kiss3d::{window::Window, event::Action};
 use kiss3d::light::Light;
 use kiss3d::event::{Key, MouseButton, WindowEvent};
 use std::{path::Path, ops::Not};
-use na::{Vector3};
+use na::{Vector3, Point3};
 
 pub fn test(){
 
     let mut window = Window::new("Kiss3d: cube");
     window.set_light(Light::StickToCamera);
+
 
     let mut towerType = "Red";
     let mut enemyType = "Black";

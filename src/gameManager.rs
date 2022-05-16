@@ -70,7 +70,7 @@ impl GameManager{
             eventManager: EventManager::new(),
             mapManager: MapManager::new(),
             window: Window::new("Game"),
-            physicsManager: PhysicsManager::new(),
+            physicsManager: PhysicsManager::new((0.0, 0.0, 0.0)),
             nodeHandler: NodeHandler::new(),
             towerAttackDamage: 10,
             enemyAttackDamage: 1,
@@ -260,12 +260,13 @@ impl GameManager{
         let zip = renderCompList.iter_mut().zip(rigidCompList.iter_mut().zip(typeCompList.iter_mut().zip(moveCompList.iter_mut())));
         let iter = zip.filter_map(|(renderComp, (rigidComp, (typeComp, moveComp))),
                                                                             |Some((renderComp.as_mut()?, rigidComp.as_mut()?, typeComp.as_mut()?, moveComp.as_mut()?)));
-
+        let collisionEvent = self.physicsManager.getEvent();
         /* Loop through all objects and if it's an enemy then move it */
         for (renderComp, rigidComp, typeComp, moveComp) in iter {
             if matches!(typeComp.getType(), TypeEnum::enemyType){
-                //moveEnemy()
 
+               
+                
                 let node = renderComp.getSceneNode();
 
                 let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
@@ -291,23 +292,27 @@ impl GameManager{
         if  (nextPoint.0 - 0.3) < t.0 && t.0 < (nextPoint.0 + 0.3) && (nextPoint.1 - 0.3) < t.2 && t.2 < (nextPoint.1 + 0.3){
             nextPoint = moveComp.popAndGetNextPoint();
         }
-
+        let mut rotation = (0.0, 0.0, 0.0);
         let mut velocity = (0.0, 0.0, 0.0);
         if t.0 < nextPoint.0{
-            velocity.0 = 0.01;
+            velocity.0 = 1.0;
             
         } else if t.0 > nextPoint.0{
-            velocity.0 = -0.01;
+            velocity.0 = -1.0;
+
         }
 
+        
         if t.2 < nextPoint.1 {
-            velocity.2 = 0.01;
+            velocity.2 = 1.0;
         } else if t.2 > nextPoint.1 {
-            velocity.2 = -0.01;
+            velocity.2 = -1.0;
         }
+
+        println!("{}", vector![velocity.0, velocity.1, velocity.2]);
 
         rigidBody.set_linvel(vector![velocity.0, velocity.1, velocity.2], true);
-
+        
         return (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
 
     }
