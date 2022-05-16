@@ -4,4 +4,5 @@ pub enum TypeEnum{
     enemyType,  
     projectileType,
     baseType,
+    wallType
 }

@@ -122,7 +122,7 @@ impl EntityManager{
                 target += 1;
             }
         }
-        println!("targetId: {targetId}, target: {target}, len: {len}");
+        // println!("targetId: {targetId}, target: {target}, len: {len}");
         
         drop(idCompList);
         
@@ -132,7 +132,7 @@ impl EntityManager{
                 .asAnyMut()               
                 .downcast_mut::<RefCell<Vec<Option<ComponentType>>>>()
             {
-                println!("len of componentVec: {}",componentVec.get_mut().len());
+                // println!("len of componentVec: {}",componentVec.get_mut().len());
                 componentVec.get_mut()[target] = Some(component);
                 return;
             }

@@ -1,7 +1,7 @@
 use std::{error::Error,io::{BufRead, BufReader}, fs::File};
 
 use kiss3d::window::Window;
-use na::{DMatrix, Translation3, Rotation3, geometry};
+use na::{DMatrix, Translation3};
 use nalgebra as na;
 use rand::Rng;
 
@@ -24,7 +24,7 @@ impl MapManager{
      */
     pub fn parseMap(&mut self) -> Result<i32, Box<dyn Error>> {
 
-        let f = File::open("src/resources/map2.csv")?;
+        let f = File::open("src/resources/map.csv")?;
         let mut reader = BufReader::new(f);
 
         // initialize an empty vector to fill with numbers

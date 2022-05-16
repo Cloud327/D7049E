@@ -5,9 +5,8 @@ use kiss3d::camera::FirstPerson;
 use kiss3d::text::Font;
 use ::nalgebra::{Translation3, Vector3};
 use rand::Rng;
-use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody, ActiveEvents, CollisionEvent, ColliderHandle};
+use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody, ActiveEvents, CollisionEvent};
 use std::collections::HashMap;
-use std::ops::Not;
 use std::path::Path;
 use std::sync::mpsc::Sender;
 use crate::ECS::Components::attackRateComponent::AttackRateComponent;
@@ -20,18 +19,18 @@ use crate::gameStateEnum::GameStateEnum;
 use crate::mapManager::MapManager;
 use crate::nodeHandler::NodeHandler;
 use crate::physicsManager::PhysicsManager;
-use kiss3d::scene::SceneNode;
+// use kiss3d::scene::SceneNode;
 use kiss3d::{window::Window, event::Action};
 use kiss3d::light::Light;
-use kiss3d::event::{Key, MouseButton, WindowEvent};
+use kiss3d::event::{Key};
 
-use rapier3d::na::{self as nalgebra};
+use rapier3d::na::{self as nalgebra}; // not unused :U 
 use rapier3d::prelude::AngVector;
-use na::{Matrix4, vector, UnitQuaternion, Point2, Point3};
+use na::{UnitQuaternion, Point2, Point3, vector};
 
-use std::thread::{self, JoinHandle};
+use std::thread::{self};
 use std::time::Duration;
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::{mpsc};
 
 /*
 TODO:
@@ -212,10 +211,13 @@ impl GameManager{
             self.updateNodes();
 
 
-            let collision = self.physicsManager.getEvent();
-            match collision{
-                Some(collision) => self.collisionEvent(collision),
-                None => (),
+            loop {
+                let collision = self.physicsManager.getEvent();
+                match collision{
+                    Some(collision) => self.collisionEvent(collision),
+                    None => break,
+                }
+
             }
             
 
@@ -238,22 +240,28 @@ impl GameManager{
     fn collisionEvent(&mut self, collision: CollisionEvent){
         let collider1 = collision.collider1();
         let collider2 = collision.collider2();
-        let mut types: Vec<(TypeEnum, &mut IdComponent,&mut AttackDamageComponent, &mut ColliderComponent)> = Vec::new();
+        let mut types: Vec<(TypeEnum, &mut IdComponent,&mut AttackDamageComponent, &mut ColliderComponent, &mut RenderableComponent)> = Vec::new();
 
         let mut colliderCompList = self.entityManager.borrowComponentVecMut::<ColliderComponent>().unwrap();
         let mut idCompList = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
         let mut typeCompList = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
         let mut damageCompList = self.entityManager.borrowComponentVecMut::<AttackDamageComponent>().unwrap();
-        let zip = colliderCompList.iter_mut().zip(idCompList.iter_mut().zip(typeCompList.iter_mut().zip(damageCompList.iter_mut())));
-        let iter = zip.filter_map(|(colliderComp, (idComp, (typeComp, damageComp))),
-                                                                            |Some((colliderComp.as_mut()?, idComp.as_mut()?, typeComp.as_mut()?, damageComp.as_mut()?)));
+        let mut renderCompList = self.entityManager.borrowComponentVecMut::<RenderableComponent>().unwrap();
+        
+        let zip = colliderCompList.iter_mut().zip(idCompList.iter_mut().zip(typeCompList.iter_mut().zip(damageCompList.iter_mut().zip(renderCompList.iter_mut()))));
+        let iter = zip.filter_map(|(colliderComp, (idComp, (typeComp, (damageComp, renderComp)))),
+                                                                    |Some((colliderComp.as_mut()?, idComp.as_mut()?, typeComp.as_mut()?, damageComp.as_mut()?, renderComp.as_mut()?)));
+            
+        // let zip = colliderCompList.iter_mut().zip(idCompList.iter_mut().zip(typeCompList.iter_mut().zip(damageCompList.iter_mut())));
+        // let iter = zip.filter_map(|(colliderComp, (idComp, (typeComp, damageComp))),
+        //                                                                     |Some((colliderComp.as_mut()?, idComp.as_mut()?, typeComp.as_mut()?, damageComp.as_mut()?)));
         /* Loop through all objects and if it's an enemy then move it */
-        for (colliderComp, idComp, typeComp, damageComp) in iter{
+        for (colliderComp, idComp, typeComp, damageComp, renderComp) in iter{
             if colliderComp.getColliderHandle().0 == collider1.0{ 
-                types.push((typeComp.getType(), idComp, damageComp, colliderComp));
+                types.push((typeComp.getType(), idComp, damageComp, colliderComp, renderComp));
             }
             else if colliderComp.getColliderHandle().0 == collider2.0{ 
-                types.push((typeComp.getType(), idComp, damageComp, colliderComp));
+                types.push((typeComp.getType(), idComp, damageComp, colliderComp, renderComp));
             }
         }
 
@@ -351,13 +359,20 @@ impl GameManager{
         if let EventEnum::takeDamageEvent{id, damage} = event {
             let mut healthCompList = self.entityManager.borrowComponentVecMut::<HealthComponent>().unwrap();
             let mut idCompList = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
-            let zip = healthCompList.iter_mut().zip(idCompList.iter_mut());
-
-            let iter = zip.filter_map(|(healthComp, idComp)| Some((healthComp.as_mut()?, idComp.as_mut()?)));
-            for (healthComp, idComp) in iter {
+            let mut colliderCompList = self.entityManager.borrowComponentVecMut::<ColliderComponent>().unwrap();
+            let mut renderCompList = self.entityManager.borrowComponentVecMut::<RenderableComponent>().unwrap();
+            let zip = healthCompList.iter_mut().zip(idCompList.iter_mut().zip(colliderCompList.iter_mut().zip(renderCompList.iter_mut())));
+            let iter = zip.filter_map(|(healthComp, (idComp, 
+                                                                            (colliderComp, renderComp))),
+                                                                            |Some((healthComp.as_mut()?, idComp.as_mut()?, colliderComp.as_mut()?, renderComp.as_mut()?)));
+            
+            for (healthComp, idComp, colliderComp, renderComp) in iter {
                 if idComp.getId() == id {
                     healthComp.decreaseHealth(damage);
                     println!("hp on id={} after taking damage: {}", idComp.getId(), healthComp.getHealth());
+                    if healthComp.getHealth() == 0{
+                        self.eventManager.sendEvent(EventEnum::removeObjectEvent { id:idComp.getId(), colliderHandle: colliderComp.getColliderHandle()})
+                    }
                 } 
             }
         }
@@ -375,7 +390,7 @@ impl GameManager{
         if let EventEnum::removeObjectEvent{id, colliderHandle} = event {
             self.entityManager.removeObject(id);
             self.physicsManager.removeRigidBodyWithCollider(colliderHandle.0);
-            //self.window.remove_node(sceneNode from renderableComponent);
+            // self.window.remove_node(&mut renderComp.getSceneNode().read().unwrap().to_owned());
         }
 
         // Create the necessary components for a tower
