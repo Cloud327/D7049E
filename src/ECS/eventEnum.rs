@@ -1,3 +1,7 @@
+use rapier3d::prelude::ColliderHandle;
+
+use super::{typeEnum::TypeEnum, Components::typeComponent::TypeComponent};
+
 
 pub enum EventEnum{
     takeDamageEvent{id: usize, damage: usize},  // Id of enemy tower
@@ -5,6 +9,6 @@ pub enum EventEnum{
     //spawnTowerEvent{x: usize, y: usize, z: usize},
     //spawnEnemyEvent,
     spawnProjectileEvent{x: usize, y: usize, z: usize},
-    removeObjectEvent{id: usize},
+    removeObjectEvent{id: usize, colliderHandle: ColliderHandle},
 }
 

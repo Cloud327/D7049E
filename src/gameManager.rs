@@ -5,7 +5,7 @@ use kiss3d::camera::FirstPerson;
 use kiss3d::text::Font;
 use ::nalgebra::{Translation3, Vector3};
 use rand::Rng;
-use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody, ActiveEvents, CollisionEvent};
+use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody, ActiveEvents, CollisionEvent, ColliderHandle};
 use std::collections::HashMap;
 use std::ops::Not;
 use std::path::Path;
@@ -36,15 +36,10 @@ use std::sync::{Arc, Mutex, mpsc};
 /*
 TODO:
 
-collision events for:
-    enemy - projectile
-        send takeDamageEvent to enemy and remove the projectile
-    enemy - base
-        send takeDamageEvent to base and remove the enemy
-    outer wall - projectile
-        remove the projectile
+fix collisionevents:
+    removeObjects in entityManager
+    remove sceneNode from renderableComponent
 
-checkEnemies function, fix game won condition
 add game lost condition somewhere
 
 if base's healthComponent = 0:      // Make sure we don't delete base object before saying game over
@@ -71,9 +66,11 @@ impl GameManager{
         let gameParameters = HashMap::from([
             ("towerAttackDamage", 10.0),
             ("enemyAttackDamage", 1.0),
+            ("enemyHealth", 50.0),
+            ("baseHealth", 10.0),
             ("enemyHeight", 1.0),
             ("towerHeight", 0.3),
-            ("enemySpeed", 1.0),
+            ("enemySpeed", 2.0),
             ("projectileSpeed", 10.0),
             ("towerAttackRate", 4.0),  // How many seconds between each attack
             ("finalWave", 10.0),
@@ -215,12 +212,11 @@ impl GameManager{
             self.updateNodes();
 
 
-            // let collision = self.physicsManager.getEvent();
-            // match collision{
-            //     Some(collision) => self.collisionEvent(collision),
-            //     None => (),
-            // }
-            
+            let collision = self.physicsManager.getEvent();
+            match collision{
+                Some(collision) => self.collisionEvent(collision),
+                None => (),
+            }
             
 
             if matches!(self.gameState, GameStateEnum::won){
@@ -242,7 +238,7 @@ impl GameManager{
     fn collisionEvent(&mut self, collision: CollisionEvent){
         let collider1 = collision.collider1();
         let collider2 = collision.collider2();
-        let mut types: Vec<(TypeEnum, &mut IdComponent,&mut AttackDamageComponent)> = Vec::new();
+        let mut types: Vec<(TypeEnum, &mut IdComponent,&mut AttackDamageComponent, &mut ColliderComponent)> = Vec::new();
 
         let mut colliderCompList = self.entityManager.borrowComponentVecMut::<ColliderComponent>().unwrap();
         let mut idCompList = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
@@ -254,64 +250,60 @@ impl GameManager{
         /* Loop through all objects and if it's an enemy then move it */
         for (colliderComp, idComp, typeComp, damageComp) in iter{
             if colliderComp.getColliderHandle().0 == collider1.0{ 
-                types.push((typeComp.getType(), idComp, damageComp));
+                types.push((typeComp.getType(), idComp, damageComp, colliderComp));
             }
             else if colliderComp.getColliderHandle().0 == collider2.0{ 
-                types.push((typeComp.getType(), idComp, damageComp));
+                types.push((typeComp.getType(), idComp, damageComp, colliderComp));
             }
         }
 
-        let obj1 = types.pop().unwrap();
-        let obj2 = types.pop().unwrap();
+        let obj1 = types.pop();
+        let obj2 = types.pop();
 
-        if matches!(obj1.0, TypeEnum::enemyType){
-            if matches!(obj2.0, TypeEnum::projectileType){
-                println!("enemy & projectile");
-                self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj1.1.getId(), damage: obj2.2.getAttackDamage() as usize});
-                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId() });
+        if obj1.is_some() && obj2.is_some(){
+            let obj1 = obj1.unwrap();
+            let obj2 = obj2.unwrap();
+
+            if matches!(obj1.0, TypeEnum::enemyType){
+                if matches!(obj2.0, TypeEnum::projectileType){
+                    println!("enemy & projectile");
+                    self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj1.1.getId(), damage: obj2.2.getAttackDamage() as usize});
+                    self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId(), colliderHandle: obj2.3.getColliderHandle()});
+                }
+                else if matches!(obj2.0, TypeEnum::baseType){
+                    println!("enemy & base");
+                    self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj2.1.getId(), damage: obj1.2.getAttackDamage() as usize});
+                    self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId(), colliderHandle: obj1.3.getColliderHandle()});
+                }
             }
-            else if matches!(obj2.0, TypeEnum::baseType){
-                println!("enemy & base");
-                self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj2.1.getId(), damage: obj1.2.getAttackDamage() as usize});
-                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId() });
+    
+            if matches!(obj1.0, TypeEnum::projectileType){
+                if matches!(obj2.0, TypeEnum::enemyType){
+                    println!("projectile & enemy");
+                    self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj2.1.getId(), damage: obj1.2.getAttackDamage() as usize});
+                    self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId(), colliderHandle: obj1.3.getColliderHandle()});
+                }
+                else if matches!(obj2.0, TypeEnum::wallType){
+                    println!("projectile & wall");
+                    self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId(), colliderHandle: obj1.3.getColliderHandle()});
+                }
+            }
+    
+            if matches!(obj1.0, TypeEnum::baseType){
+                if matches!(obj2.0, TypeEnum::enemyType){
+                    println!("base & enemy");
+                    self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj1.1.getId(), damage: obj2.2.getAttackDamage() as usize});
+                    self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId(), colliderHandle: obj2.3.getColliderHandle()});
+                }
+            }
+    
+            if matches!(obj1.0, TypeEnum::wallType){
+                if matches!(obj2.0, TypeEnum::projectileType){
+                    println!("wall & projectile");
+                    self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId(), colliderHandle: obj2.3.getColliderHandle()});
+                }
             }
         }
-
-        if matches!(obj1.0, TypeEnum::projectileType){
-            if matches!(obj2.0, TypeEnum::enemyType){
-                println!("projectile & enemy");
-                self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj2.1.getId(), damage: obj1.2.getAttackDamage() as usize});
-                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId() });
-            }
-            else if matches!(obj2.0, TypeEnum::wallType){
-                println!("projectile & wall");
-                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId() });
-            }
-        }
-
-        if matches!(obj1.0, TypeEnum::baseType){
-            if matches!(obj2.0, TypeEnum::enemyType){
-                println!("base & enemy");
-                self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj1.1.getId(), damage: obj2.2.getAttackDamage() as usize});
-                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId() });
-            }
-        }
-
-        if matches!(obj1.0, TypeEnum::wallType){
-            if matches!(obj2.0, TypeEnum::projectileType){
-                println!("wall & projectile");
-                self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId() });
-            }
-        }
-
-        // loop through components to find the typecomponents - typeComponents, colliderComponents, idComponents, attackDamageComponent
-        // 
-        //     enemy - projectile
-        //          send takeDamageEvent(enemyID, towerAttackDamage) and removeObjectEvent(projectileID)
-        //      enemy - base
-        //          send takeDamageEvent(baseID, enemyAttackDamage) and removeObjectEvent(enemyID)
-        //      outer wall - projectile
-        //          remove the projectile
     }
 
 
@@ -365,6 +357,7 @@ impl GameManager{
             for (healthComp, idComp) in iter {
                 if idComp.getId() == id {
                     healthComp.decreaseHealth(damage);
+                    println!("hp on id={} after taking damage: {}", idComp.getId(), healthComp.getHealth());
                 } else {
                     println!("No such id");
                 }
@@ -378,9 +371,13 @@ impl GameManager{
             for coords in coordList{
                 self.spawnProjectile(xTarget, yTarget, zTarget, 
                                         coords.0, *self.gameParameters.get("enemyHeight").unwrap(), coords.1);
-                println!("Spawned projectile!")
-
             }
+        }
+
+        if let EventEnum::removeObjectEvent{id, colliderHandle} = event {
+            self.entityManager.removeObject(id);
+            self.physicsManager.removeRigidBodyWithCollider(colliderHandle.0);
+            //self.window.remove_node(sceneNode from renderableComponent);
         }
 
         // Create the necessary components for a tower
@@ -403,7 +400,8 @@ impl GameManager{
         let mut typeCompList = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
         let mut moveCompList = self.entityManager.borrowComponentVecMut::<MoveComponent>().unwrap();
         let zip = renderCompList.iter_mut().zip(rigidCompList.iter_mut().zip(typeCompList.iter_mut().zip(moveCompList.iter_mut())));
-        let iter = zip.filter_map(|(renderComp, (rigidComp, (typeComp, moveComp))),
+        let iter = zip.filter_map(|(renderComp, (rigidComp, 
+                                                                            (typeComp, moveComp))),
                                                                             |Some((renderComp.as_mut()?, rigidComp.as_mut()?, typeComp.as_mut()?, moveComp.as_mut()?)));
         /* Loop through all objects and if it's an enemy then move it */
         for (renderComp, rigidComp, typeComp, moveComp) in iter {
@@ -431,12 +429,16 @@ impl GameManager{
                 node.write().unwrap().set_local_rotation(r);
             }
             if matches!(typeComp.getType(), TypeEnum::projectileType){
+                let a = rigidComp.getRigidBodyHandle();
+                println!("{}", rigidComp.getRigidBodyHandle().0.into_raw_parts().0);
                 let node = renderComp.getSceneNode();
                 let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
                 let t = (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
                 node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
                 node.write().unwrap().prepend_to_local_rotation(&UnitQuaternion::from_axis_angle(&Vector3::y_axis(), 0.6));
             }
+            
+
         }
     }
 
@@ -471,8 +473,10 @@ impl GameManager{
 
         let base = self.entityManager.newObject();
         self.entityManager.addComponentToObject(base, TypeComponent::new(TypeEnum::baseType));
-        self.entityManager.addComponentToObject(base, HealthComponent::new(20));
+        self.entityManager.addComponentToObject(base, HealthComponent::new(*self.gameParameters.get("baseHealth").unwrap() as usize));
+        // Remove these plz
         self.entityManager.addComponentToObject(base, MoveComponent::new(0.0));
+        self.entityManager.addComponentToObject(base, AttackDamageComponent::new(0.0));
 
         self.createRenderComponent(base, TypeEnum::baseType, endCoords.0, 0.2, endCoords.1, 0.007);
         self.createRigidBodyAndColliderComponents(base, TypeEnum::baseType, endCoords.0, 0.2, endCoords.1, (0.0, 0.0, 0.0), 1.0);
@@ -515,7 +519,7 @@ impl GameManager{
         let enemy = self.entityManager.newObject();
         self.entityManager.addComponentToObject(enemy, TypeComponent::new(TypeEnum::enemyType));
         self.entityManager.addComponentToObject(enemy, AttackDamageComponent::new(*self.gameParameters.get("enemyAttackDamage").unwrap()));
-        self.entityManager.addComponentToObject(enemy, HealthComponent::new(30));
+        self.entityManager.addComponentToObject(enemy, HealthComponent::new(*self.gameParameters.get("enemyHealth").unwrap() as usize));
         self.entityManager.addComponentToObject(enemy, MoveComponent::newWithPath(*self.gameParameters.get("enemySpeed").unwrap(), self.mapManager.findPath().unwrap()));
         
         let startCoords = self.mapManager.getStart();
@@ -597,6 +601,11 @@ impl GameManager{
         self.entityManager.addComponentToObject(wall2, TypeComponent::new(TypeEnum::wallType));
         self.entityManager.addComponentToObject(wall3, TypeComponent::new(TypeEnum::wallType));
         self.entityManager.addComponentToObject(wall4, TypeComponent::new(TypeEnum::wallType));
+        // I want to remove this but then wall collision events are impossible......
+        self.entityManager.addComponentToObject(wall1, AttackDamageComponent::new(0.0));
+        self.entityManager.addComponentToObject(wall2, AttackDamageComponent::new(0.0));
+        self.entityManager.addComponentToObject(wall3, AttackDamageComponent::new(0.0));
+        self.entityManager.addComponentToObject(wall4, AttackDamageComponent::new(0.0));
 
         // The south wall
         let collider = ColliderBuilder::new(ColliderShape::cuboid(width as f32+4.0, 5.0, 0.1));

@@ -24,7 +24,7 @@ impl MapManager{
      */
     pub fn parseMap(&mut self) -> Result<i32, Box<dyn Error>> {
 
-        let f = File::open("src/resources/map2.csv")?;
+        let f = File::open("src/resources/map.csv")?;
         let mut reader = BufReader::new(f);
 
         // initialize an empty vector to fill with numbers

@@ -36,7 +36,7 @@ impl EntityManager{
 
 
     /*
-     * Removes an object by setting all its components to None
+     * Removes an object 
      */
     pub fn removeObject(&mut self, idToRemove:usize) {
         // step 1: find index of idToRemove
@@ -107,6 +107,8 @@ impl EntityManager{
         component: ComponentType,
     ) {
         let mut idCompList = self.borrowComponentVecMut::<IdComponent>().unwrap();
+        let len = idCompList.len();
+
         let iter = idCompList.iter_mut().filter_map(|id| Some(id.as_mut()?));
         let mut target = 0; // use this to find the targetIds index in the idCompList
         for id in iter{
@@ -129,15 +131,15 @@ impl EntityManager{
         }
         // No matching component storage exists yet, so we have to make one.
         let mut newComponentVec: Vec<Option<ComponentType>> =
-        Vec::with_capacity(self.componentVecs.len());
+        Vec::with_capacity(len+1);
 
         // All existing entities don't have this component, so we give them `None`
-        for _ in 0..self.componentVecs.len() {
+        for _ in 0..len+1 {
             newComponentVec.push(None);
         }
 
         // Give this object the Component.
-        newComponentVec.push(Some(component));
+        newComponentVec[target] = Some(component);  //push??
         self.componentVecs.push(Box::new(RefCell::new(newComponentVec)));
 
     }
