@@ -1,6 +1,6 @@
 use std::{sync::RwLock, borrow::Borrow};
 
-use rapier3d::{prelude::*, crossbeam::{channel::{Sender, Receiver}, self}};
+use rapier3d::{prelude::*, crossbeam::{channel::{Sender, Receiver}, self}, data::Index};
 
 
 pub struct PhysicsManager{
@@ -90,6 +90,17 @@ impl PhysicsManager{
     pub fn getCollider(&self, colliderHandle: ColliderHandle) -> &Collider{
         return &self.colliderSet[colliderHandle];
     }
+
+    pub fn removeCollider(&mut self, handle: ColliderHandle){
+        self.colliderSet.remove(handle, &mut self.islandManager, &mut self.rigidBodySet, true);
+    }
+
+
+    pub fn removeRigidBodyWithCollider(&mut self, handle: Index){
+        self.rigidBodySet.remove(RigidBodyHandle(handle), &mut self.islandManager, &mut self.colliderSet, &mut self.impulseJointSet, &mut self.multibody_joint_set, true);
+
+    }
+
 
     pub fn getEvent(&mut self) -> Option<rapier3d::geometry::CollisionEvent>{
         while let Ok(collisionEvent) = self.collisionRecieve.try_recv() {
