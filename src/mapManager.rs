@@ -22,9 +22,9 @@ impl MapManager{
      * map.csv should contain only the strings s,e,r,g,t for start, end, road, ground, tower
      * seperated by semicolons since that is what excel gave me
      */
-    pub fn parseMap(&mut self) -> Result<i32, Box<dyn Error>> {
+    pub fn parseMap(&mut self, mapPath: &str) -> Result<i32, Box<dyn Error>> {
 
-        let f = File::open("src/resources/map.csv")?;
+        let f = File::open(mapPath)?;
         let reader = BufReader::new(f);
 
         // initialize an empty vector to fill with numbers
