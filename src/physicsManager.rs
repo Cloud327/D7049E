@@ -87,8 +87,8 @@ impl PhysicsManager{
         return self.rigidBodySet.get_mut(rigidBodyHandle);
     }
 
-    pub fn getCollider(&self, colliderHandle: ColliderHandle) -> &Collider{
-        return &self.colliderSet[colliderHandle];
+    pub fn getCollider(&mut self, colliderHandle: ColliderHandle) -> &mut Collider{
+        return &mut self.colliderSet[colliderHandle];
     }
 
     pub fn removeCollider(&mut self, handle: ColliderHandle){

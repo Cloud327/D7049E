@@ -49,8 +49,6 @@ if base's healthComponent = 0:      // Make sure we don't delete base object bef
 
 */
 
-
-
 pub struct GameManager{
     entityManager: EntityManager,
     eventManager: EventManager,
@@ -72,7 +70,7 @@ impl GameManager{
             ("baseHealth", 10.0),
             ("enemyHeight", 1.0),
             ("towerHeight", 0.3),
-            ("enemySpeed", 1.0),
+            ("enemySpeed", 1.5),
             ("projectileSpeed", 10.0),
             ("towerAttackRate", 2.0),  // How many seconds between each attack
             ("finalWave", 10.0),
@@ -110,10 +108,8 @@ impl GameManager{
             self.spawnTower(coords.0, *self.gameParameters.get("towerHeight").unwrap(), coords.1);
         }
 
-        // TODO: Create outer walls
-        // Check len of mapMatrix and len of a mapMatrix col
-        // build walls at coors (0,0-0,len), (0,0-colLen,0), (0,len-len,colLen), (colLen,0-len,colLen)
-        // self.createWalls();
+        // Creates walls
+        self.createWalls();
 
         self.window.set_light(Light::StickToCamera);
         self.window.set_background_color(0.5, 0.7, 1.0);
@@ -236,12 +232,16 @@ impl GameManager{
                 self.window.draw_text("You lose! :(", &pos, 250.0, &font, &Point3::new(0.0, 0.0, 0.4));
             }
 
-            self.window.render_with_camera(&mut first_person);
+            // self.window.render_with_camera(&mut first_person);
+            self.window.render();
         }
     }
 
 
     fn collisionEvent(&mut self, collision: CollisionEvent){
+        if collision.stopped(){
+            return;
+        }
         let collider1 = collision.collider1();
         let collider2 = collision.collider2();
         let mut types: Vec<(TypeEnum, &mut IdComponent,&mut AttackDamageComponent, &mut ColliderComponent, &mut RenderableComponent)> = Vec::new();
@@ -267,15 +267,23 @@ impl GameManager{
             else if colliderComp.getColliderHandle().0 == collider2.0{ 
                 types.push((typeComp.getType(), idComp, damageComp, colliderComp, renderComp));
             }
+            
         }
 
         let obj1 = types.pop();
         let obj2 = types.pop();
 
+        
+
         if obj1.is_some() && obj2.is_some(){
             let obj1 = obj1.unwrap();
             let obj2 = obj2.unwrap();
 
+            println!("For id={} the position collider is: {} ", obj1.1.getId(), self.physicsManager.getCollider(obj1.3.getColliderHandle()).translation());
+            // let temp = self.physicsManager.getCollider(obj1.3.getColliderHandle()).parent().unwrap();
+            // println!("For id={} the position rigidbody is: {} ", obj1.1.getId(), self.physicsManager.getRigidBody(temp).unwrap().translation());
+            // println!("for id={} the position of scenenode is: {} ", obj1.1.getId(), obj1.4.getSceneNode().read().unwrap().data().local_translation());
+           
             if matches!(obj1.0, TypeEnum::enemyType){
                 if matches!(obj2.0, TypeEnum::projectileType){
                     println!("enemy & projectile");
@@ -297,6 +305,7 @@ impl GameManager{
                 }
                 else if matches!(obj2.0, TypeEnum::wallType){
                     println!("projectile & wall");
+                    //println!("For id={} the position collider is: {} ", obj2.1.getId(), self.physicsManager.getCollider(obj2.3.getColliderHandle()).translation());
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId(), colliderHandle: obj1.3.getColliderHandle()});
                 }
             }
@@ -416,73 +425,45 @@ impl GameManager{
         let mut rigidCompList = self.entityManager.borrowComponentVecMut::<RigidBodyComponent>().unwrap();
         let mut typeCompList = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
         let mut moveCompList = self.entityManager.borrowComponentVecMut::<MoveComponent>().unwrap();
-        let zip = renderCompList.iter_mut().zip(rigidCompList.iter_mut().zip(typeCompList.iter_mut().zip(moveCompList.iter_mut())));
+        let mut colliderCompList = self.entityManager.borrowComponentVecMut::<ColliderComponent>().unwrap();
+        let zip = renderCompList.iter_mut().zip(rigidCompList.iter_mut().zip(typeCompList.iter_mut().zip(moveCompList.iter_mut().zip(colliderCompList.iter_mut()))));
         let iter = zip.filter_map(|(renderComp, (rigidComp, 
-                                                                            (typeComp, moveComp))),
-                                                                            |Some((renderComp.as_mut()?, rigidComp.as_mut()?, typeComp.as_mut()?, moveComp.as_mut()?)));
+                                                                            (typeComp, (moveComp, colliderComp)))),
+                                                                            |Some((renderComp.as_mut()?, rigidComp.as_mut()?, typeComp.as_mut()?, moveComp.as_mut()?, colliderComp.as_mut()?)));
         /* Loop through all objects and if it's an enemy then move it */
-        for (renderComp, rigidComp, typeComp, moveComp) in iter {
+        for (renderComp, rigidComp, typeComp, moveComp, colliderComp) in iter {
             if matches!(typeComp.getType(), TypeEnum::enemyType){
                 let node = renderComp.getSceneNode();
-
-                match self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()){
-                    Some(rigidBody) => {
-                        let t = GameManager::moveEnemy(rigidBody, moveComp);
-                        let r = rigidBody.rotation().clone();
-                        let axis;
-                            match r.axis() {
-                                Some(n) => axis = n[1],
-                                None => axis = 0.0, // why the hell would you return a None if the axis is zero ????????
-                            }
-                            let mut axisangle = Vector3::y();
-                            axisangle[1] = axisangle[1]* axis * r.angle();
-                            let r = UnitQuaternion::new(axisangle);
-
-                            //let t = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).translation();
-                            // Sets the renderableComponent node coordinates to the rigidBody coordinates
-                            node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
-                            node.write().unwrap().set_local_rotation(r);
-                    },
-                    None => (),
-                }
-                //let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
+                let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
 
                 // Retrieves the rigidBody coordinates
-                // let t = GameManager::moveEnemy(rigidBody, moveComp);
-                // let r = rigidBody.rotation().clone();
+                let t = GameManager::moveEnemy(rigidBody, moveComp);
+                let r = rigidBody.rotation().clone();
 
-                // let axis;
-                // match r.axis() {
-                //     Some(n) => axis = n[1],
-                //     None => axis = 0.0, // why the hell would you return a None if the axis is zero ????????
-                // }
+                let axis;
+                match r.axis() {
+                    Some(n) => axis = n[1],
+                    None => axis = 0.0, // why the hell would you return a None if the axis is zero ????????
+                }
 
-                // let mut axisangle = Vector3::y();
-                // axisangle[1] = axisangle[1]* axis * r.angle();
-                // let r = UnitQuaternion::new(axisangle);
+                let mut axisangle = Vector3::y();
+                axisangle[1] = axisangle[1]* axis * r.angle();
+                let r = UnitQuaternion::new(axisangle);
 
-                // //let t = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).translation();
-                // // Sets the renderableComponent node coordinates to the rigidBody coordinates
-                // node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
-                // node.write().unwrap().set_local_rotation(r);
+                //let t = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).translation();
+                // Sets the renderableComponent node coordinates to the rigidBody coordinates
+                node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
+                node.write().unwrap().set_local_rotation(r);
+                self.physicsManager.getCollider(colliderComp.getColliderHandle()).set_translation(vector![t.0, t.1, t.2])
             }
             if matches!(typeComp.getType(), TypeEnum::projectileType){
-                // let a = rigidComp.getRigidBodyHandle();
-                // println!("{}", rigidComp.getRigidBodyHandle().0.into_raw_parts().0);
                 let node = renderComp.getSceneNode();
-                // match self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()) {
-                //     Some(rb) => {
 
-                //         node.write().unwrap().set_local_translation(Translation3::new(rb.translation()[0], rb.translation()[1], rb.translation()[2]));
-                //         node.write().unwrap().prepend_to_local_rotation(&UnitQuaternion::from_axis_angle(&Vector3::y_axis(), 0.6));
-
-                //     },
-                //     None => (),
-                // }
                 let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
                 let t = (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
                 node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
                 node.write().unwrap().prepend_to_local_rotation(&UnitQuaternion::from_axis_angle(&Vector3::y_axis(), 0.6));
+                self.physicsManager.getCollider(colliderComp.getColliderHandle()).set_translation(vector![t.0, t.1, t.2])
             }
             
 
@@ -634,6 +615,7 @@ impl GameManager{
         let map = self.mapManager.getMapMatrix();
         let width = map.ncols() as f32;
         let height = map.nrows() as f32;
+        let offset = 100.0;
 
         let wall1 = self.entityManager.newObject();
         let wall2 = self.entityManager.newObject();
@@ -641,19 +623,23 @@ impl GameManager{
         let wall4 = self.entityManager.newObject();
 
         let mut cube = self.window.add_cube(width as f32+4.0, 5.0, 0.1);
-        cube.set_local_translation(Translation3::new(width/2.0 -0.5, 2.5, -2.0));
+        cube.set_local_translation(Translation3::new(width/2.0-0.5+offset, 2.5, offset-2.0));
+        //cube.set_visible(false);
         self.entityManager.addComponentToObject(wall1, RenderableComponent::new(cube));
 
         let mut cube = self.window.add_cube(width as f32+4.0, 5.0, 0.1);
-        cube.set_local_translation(Translation3::new(width/2.0-0.5, 2.5, height+2.0));
+        cube.set_local_translation(Translation3::new(width/2.0-0.5+offset, 2.5, height+2.0+offset));
+        //cube.set_visible(false);
         self.entityManager.addComponentToObject(wall2, RenderableComponent::new(cube));
 
         let mut cube = self.window.add_cube(0.1, 5.0, height+3.8);
-        cube.set_local_translation(Translation3::new(-2.5, 2.5, height/2.0));
+        cube.set_local_translation(Translation3::new(offset-2.5, 2.5, height/2.0+offset));
+        //cube.set_visible(false);
         self.entityManager.addComponentToObject(wall3, RenderableComponent::new(cube));
 
         let mut cube = self.window.add_cube(0.1, 5.0, height+3.8);
-        cube.set_local_translation(Translation3::new(width+2.0-0.5, 2.5, height/2.0));
+        cube.set_local_translation(Translation3::new(width+2.0-0.5+offset, 2.5, height/2.0+offset));
+        //cube.set_visible(false);
         self.entityManager.addComponentToObject(wall4, RenderableComponent::new(cube));
 
         self.entityManager.addComponentToObject(wall1, TypeComponent::new(TypeEnum::wallType));
@@ -668,25 +654,25 @@ impl GameManager{
 
         // The south wall
         let collider = ColliderBuilder::new(ColliderShape::cuboid(width as f32+4.0, 5.0, 0.1));
-        let collider = collider.translation(vector![width/2.0-0.5, 2.5, -2.0]).active_events(ActiveEvents::COLLISION_EVENTS).build();
+        let collider = collider.translation(vector![width/2.0-0.5+offset, 2.5, offset-2.0]).active_events(ActiveEvents::COLLISION_EVENTS).build();
         let colliderHandle = self.physicsManager.addCollider(collider);
         self.entityManager.addComponentToObject(wall1, ColliderComponent::new(colliderHandle));
 
         // The north wall
         let collider = ColliderBuilder::new(ColliderShape::cuboid(width as f32+4.0, 5.0, 0.1));
-        let collider = collider.translation(vector![width/2.0-0.5, 2.5, height+2.0]).active_events(ActiveEvents::COLLISION_EVENTS).build();
+        let collider = collider.translation(vector![width/2.0-0.5+offset, 2.5, height+2.0+offset]).active_events(ActiveEvents::COLLISION_EVENTS).build();
         let colliderHandle = self.physicsManager.addCollider(collider);
         self.entityManager.addComponentToObject(wall2, ColliderComponent::new(colliderHandle));
 
         // The east wall
         let collider = ColliderBuilder::new(ColliderShape::cuboid(0.1, 5.0, height+3.8));
-        let collider = collider.translation(vector![-2.5, 2.5, height/2.0]).active_events(ActiveEvents::COLLISION_EVENTS).build();
+        let collider = collider.translation(vector![offset-2.5, 2.5, height/2.0+offset]).active_events(ActiveEvents::COLLISION_EVENTS).build();
         let colliderHandle = self.physicsManager.addCollider(collider);
         self.entityManager.addComponentToObject(wall3, ColliderComponent::new(colliderHandle));
 
         // The west wall
         let collider = ColliderBuilder::new(ColliderShape::cuboid(0.1, 5.0, height+3.8));
-        let collider = collider.translation(vector![width+1.5, 2.5, height/2.0]).active_events(ActiveEvents::COLLISION_EVENTS).build();
+        let collider = collider.translation(vector![width+2.0-0.5+offset, 2.5, height/2.0+offset]).active_events(ActiveEvents::COLLISION_EVENTS).build();
         let colliderHandle = self.physicsManager.addCollider(collider);
         self.entityManager.addComponentToObject(wall4, ColliderComponent::new(colliderHandle));
     }
