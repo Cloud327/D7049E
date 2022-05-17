@@ -196,7 +196,7 @@ impl MapManager{
                 // depending of character in mm[(r,c)] draw a tile in a different color?
                 let currentTile = &self.mapMatrix[(row,col)];
                 if groundTiles.contains(currentTile) {
-                    let mut tile = window.add_cube(1.0+100.0,0.2,1.0+100.0);
+                    let mut tile = window.add_cube(1.0,0.2,1.0);
                     tile.set_local_translation(Translation3::new(col as f32+100.0, 0.0, row as f32+100.0));
                     tile.set_color(0.2, 0.6, 0.0); // ground is green
                 } else if roadTiles.contains(currentTile) {
@@ -238,14 +238,16 @@ impl MapManager{
         for column in 0..self.mapMatrix.ncols(){
             for row in 0..self.mapMatrix.nrows(){
                 if &self.mapMatrix[(row,column)] == "g" {
-                    freeList.push((column as f32+100.0,row as f32+100.0));
+                    freeList.push((column as f32,row as f32));
                 } 
             }
         }
 
         if freeList.len() > 0 {
-            let nextTower = freeList[rand::thread_rng().gen_range(0..freeList.len())];
+            let mut nextTower = freeList[rand::thread_rng().gen_range(0..freeList.len())];
             self.mapMatrix[(nextTower.1 as usize,nextTower.0 as usize)] = "t".to_string();
+            nextTower.0 += 100.0;
+            nextTower.1 += 100.0;
             return Ok(nextTower);
         }
         return Err("no free tiles");
