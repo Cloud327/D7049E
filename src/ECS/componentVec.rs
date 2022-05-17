@@ -25,6 +25,5 @@ impl<T: 'static> ComponentVec for RefCell<Vec<Option<T>>> {
 
     fn removeAt(&mut self, index:usize) {
         self.get_mut().remove(index);
-        // println!("removing something at index {index} in componentVec");
     }
 }

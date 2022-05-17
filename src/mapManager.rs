@@ -25,7 +25,7 @@ impl MapManager{
     pub fn parseMap(&mut self) -> Result<i32, Box<dyn Error>> {
 
         let f = File::open("src/resources/map.csv")?;
-        let mut reader = BufReader::new(f);
+        let reader = BufReader::new(f);
 
         // initialize an empty vector to fill with numbers
         let mut data = Vec::new();
@@ -69,11 +69,11 @@ impl MapManager{
         for column in 0..self.mapMatrix.ncols(){
             for row in 0..self.mapMatrix.nrows(){
                 if &self.mapMatrix[(row,column)] == "s" {
-                    return (column as f32,row as f32)
+                    return (column as f32 + 100.0 ,row as f32 + 100.0)
                 } 
             }
         }
-        return (1.0, 1.0)
+        return (100.0, 100.0)
     }
 
     /* 
@@ -84,11 +84,11 @@ impl MapManager{
         for column in 0..self.mapMatrix.ncols(){
             for row in 0..self.mapMatrix.nrows(){
                 if &self.mapMatrix[(row,column)] == "e" {
-                    return (column as f32,row as f32)
+                    return (column as f32 + 100.0 ,row as f32 + 100.0)
                 } 
             }
         }
-        return (1.0, 1.0)
+        return (100.0, 100.0)
     }
 
     /*
@@ -155,13 +155,13 @@ impl MapManager{
             // vertex x=(i,j) such that M[i][j] is "e" (end) stop and
             // return path
             if M[(i as usize,j as usize)] == "e" {
-                path.push((j,i));
+                path.push((j+100,i+100));
                 return Ok(path);
             }
                 
             // marking as wall upon successful visitation
             // if start or path
-            path.push((j,i));
+            path.push((j+100,i+100));
             M[(i as usize,j as usize)] = "g".to_string();
         
             // appending to queue u=(i,j+1),u=(i,j-1)
@@ -188,6 +188,7 @@ impl MapManager{
         let roadTiles = "rse";
         let groundTiles = "gt";
 
+        
         // loop thru mapMatrix
         for row in 0..self.mapMatrix.nrows(){
             for col in 0..self.mapMatrix.ncols(){
@@ -195,12 +196,12 @@ impl MapManager{
                 // depending of character in mm[(r,c)] draw a tile in a different color?
                 let currentTile = &self.mapMatrix[(row,col)];
                 if groundTiles.contains(currentTile) {
-                    let mut tile = window.add_cube(1.0,0.2,1.0);
-                    tile.set_local_translation(Translation3::new(col as f32, 0.0, row as f32));
+                    let mut tile = window.add_cube(1.0+100.0,0.2,1.0+100.0);
+                    tile.set_local_translation(Translation3::new(col as f32+100.0, 0.0, row as f32+100.0));
                     tile.set_color(0.2, 0.6, 0.0); // ground is green
                 } else if roadTiles.contains(currentTile) {
                     let mut tile = window.add_cube(1.0,0.15,1.0);
-                    tile.set_local_translation(Translation3::new(col as f32, 0.0, row as f32));
+                    tile.set_local_translation(Translation3::new(col as f32+100.0, 0.0, row as f32+100.0));
                     tile.set_color(0.8, 0.4, 0.0); // road is brown
                 } 
             } 
@@ -219,7 +220,7 @@ impl MapManager{
         for column in 0..self.mapMatrix.ncols(){
             for row in 0..self.mapMatrix.nrows(){
                 if &self.mapMatrix[(row,column)] == "t" {
-                    towerList.push((column as f32,row as f32));
+                    towerList.push((column as f32+100.0,row as f32+100.0));
                 } 
             }
         }
@@ -237,7 +238,7 @@ impl MapManager{
         for column in 0..self.mapMatrix.ncols(){
             for row in 0..self.mapMatrix.nrows(){
                 if &self.mapMatrix[(row,column)] == "g" {
-                    freeList.push((column as f32,row as f32));
+                    freeList.push((column as f32+100.0,row as f32+100.0));
                 } 
             }
         }

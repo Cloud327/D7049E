@@ -39,6 +39,9 @@ impl EntityManager{
      * Removes an object by setting all its components to None
      */
     pub fn removeObject(&mut self, idToRemove:usize) {
+
+        println!("removing object at id {}",idToRemove);
+
         // step 1: find index of idToRemove
         let mut idCompList = self.borrowComponentVecMut::<IdComponent>().unwrap();
         let iter = idCompList.iter_mut().filter_map(|id| Some(id.as_mut()?));

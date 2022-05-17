@@ -69,7 +69,7 @@ impl GameManager{
             ("baseHealth", 10.0),
             ("enemyHeight", 1.0),
             ("towerHeight", 0.3),
-            ("enemySpeed", 2.0),
+            ("enemySpeed", 1.0),
             ("projectileSpeed", 10.0),
             ("towerAttackRate", 4.0),  // How many seconds between each attack
             ("finalWave", 10.0),
@@ -115,6 +115,9 @@ impl GameManager{
         self.window.set_light(Light::StickToCamera);
         self.window.set_background_color(0.5, 0.7, 1.0);
         
+        let cube = self.window.add_cube(1.0,1.0,1.0);
+        println!("{}",cube.data().local_translation());
+
     }
 
     pub fn gameloop(&mut self){
@@ -238,6 +241,10 @@ impl GameManager{
 
 
     fn collisionEvent(&mut self, collision: CollisionEvent){
+        if collision.stopped() {
+            return;
+        }
+
         let collider1 = collision.collider1();
         let collider2 = collision.collider2();
         let mut types: Vec<(TypeEnum, &mut IdComponent,&mut AttackDamageComponent, &mut ColliderComponent, &mut RenderableComponent)> = Vec::new();
@@ -271,6 +278,12 @@ impl GameManager{
         if obj1.is_some() && obj2.is_some(){
             let obj1 = obj1.unwrap();
             let obj2 = obj2.unwrap();
+
+            let parent = self.physicsManager.getCollider(obj2.3.getColliderHandle()).parent().unwrap();
+
+            println!("For id={} the position collider is: {} ", obj2.1.getId(), self.physicsManager.getCollider(obj2.3.getColliderHandle()).translation());
+            println!("For id={} the position rigidbody is: {} ", obj2.1.getId(), self.physicsManager.getRigidBody(parent).unwrap().translation());
+            println!("for id={} the position of scenenode is: {} ", obj2.1.getId(), obj2.4.getSceneNode().read().unwrap().data().local_translation());
 
             if matches!(obj1.0, TypeEnum::enemyType){
                 if matches!(obj2.0, TypeEnum::projectileType){
@@ -389,7 +402,7 @@ impl GameManager{
 
         if let EventEnum::removeObjectEvent{id, colliderHandle} = event {
             self.entityManager.removeObject(id);
-            self.physicsManager.removeRigidBodyWithCollider(colliderHandle.0);
+            self.physicsManager.removeRigidBodyWithCollider(colliderHandle);
             // self.window.remove_node(&mut renderComp.getSceneNode().read().unwrap().to_owned());
         }
 
@@ -412,12 +425,13 @@ impl GameManager{
         let mut rigidCompList = self.entityManager.borrowComponentVecMut::<RigidBodyComponent>().unwrap();
         let mut typeCompList = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
         let mut moveCompList = self.entityManager.borrowComponentVecMut::<MoveComponent>().unwrap();
-        let zip = renderCompList.iter_mut().zip(rigidCompList.iter_mut().zip(typeCompList.iter_mut().zip(moveCompList.iter_mut())));
+        let mut colliderCompList = self.entityManager.borrowComponentVecMut::<ColliderComponent>().unwrap();
+        let zip = renderCompList.iter_mut().zip(rigidCompList.iter_mut().zip(typeCompList.iter_mut().zip(moveCompList.iter_mut().zip(colliderCompList.iter_mut()))));
         let iter = zip.filter_map(|(renderComp, (rigidComp, 
-                                                                            (typeComp, moveComp))),
-                                                                            |Some((renderComp.as_mut()?, rigidComp.as_mut()?, typeComp.as_mut()?, moveComp.as_mut()?)));
+                                                                            (typeComp, (moveComp, colliderComp)))),
+                                                                            |Some((renderComp.as_mut()?, rigidComp.as_mut()?, typeComp.as_mut()?, moveComp.as_mut()?, colliderComp.as_mut()?)));
         /* Loop through all objects and if it's an enemy then move it */
-        for (renderComp, rigidComp, typeComp, moveComp) in iter {
+        for (renderComp, rigidComp, typeComp, moveComp,colliderComp) in iter {
             if matches!(typeComp.getType(), TypeEnum::enemyType){
                 let node = renderComp.getSceneNode();
                 let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
@@ -440,24 +454,26 @@ impl GameManager{
                 // Sets the renderableComponent node coordinates to the rigidBody coordinates
                 node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
                 node.write().unwrap().set_local_rotation(r);
+                self.physicsManager.getCollider(colliderComp.getColliderHandle()).set_translation(vector![t.0, t.1, t.2])
             }
             if matches!(typeComp.getType(), TypeEnum::projectileType){
                 // let a = rigidComp.getRigidBodyHandle();
                 // println!("{}", rigidComp.getRigidBodyHandle().0.into_raw_parts().0);
                 let node = renderComp.getSceneNode();
-                match self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()) {
-                    Some(rb) => {
+                // match self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()) {
+                //     Some(rb) => {
 
-                        node.write().unwrap().set_local_translation(Translation3::new(rb.translation()[0], rb.translation()[1], rb.translation()[2]));
-                        node.write().unwrap().prepend_to_local_rotation(&UnitQuaternion::from_axis_angle(&Vector3::y_axis(), 0.6));
+                //         node.write().unwrap().set_local_translation(Translation3::new(rb.translation()[0], rb.translation()[1], rb.translation()[2]));
+                //         node.write().unwrap().prepend_to_local_rotation(&UnitQuaternion::from_axis_angle(&Vector3::y_axis(), 0.6));
 
-                    },
-                    None => (),
-                }
-                // let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
-                // let t = (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
-                // node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
-                // node.write().unwrap().prepend_to_local_rotation(&UnitQuaternion::from_axis_angle(&Vector3::y_axis(), 0.6));
+                //     },
+                //     None => (),
+                // }
+                let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
+                let t = (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
+                node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
+                node.write().unwrap().prepend_to_local_rotation(&UnitQuaternion::from_axis_angle(&Vector3::y_axis(), 0.6));
+                self.physicsManager.getCollider(colliderComp.getColliderHandle()).set_translation(vector![t.0, t.1, t.2])
             }
             
 
@@ -668,7 +684,9 @@ pub fn test(){
 
     //gm.spawnEnemy();
     //gm.spawnTower(2.0, 0.3, 4.0);
-    //gm.spawnProjectile(5.0, 5.0, 5.0, 3.0, 1.0, 10.0);
+    gm.spawnProjectile(5.0, 5.0, 5.0, 3.0, 1.0, 10.0);
+
+
 
     gm.gameloop();
 
