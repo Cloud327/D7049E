@@ -16,18 +16,26 @@ pub fn run() {
           .build();
   let collider = ColliderBuilder::ball(0.5).restitution(0.7).active_events(ActiveEvents::COLLISION_EVENTS).build();
   let ball_body_handle = physicsManager.addRigidBody(rigid_body);
-  physicsManager.addColliderWithParent(collider, ball_body_handle);
+  let colliderHandle = physicsManager.addColliderWithParent(collider, ball_body_handle);
 
 
   /* Run the game loop, stepping the simulation once per frame. */
-  for _ in 0..200 {
+  for i in 0..200 {
     physicsManager.step();
     physicsManager.getEvent();
-
-    let ball_body = physicsManager.getRigidBody(ball_body_handle);
+    
+    
+    let ball_body = physicsManager.getRigidBody(ball_body_handle).unwrap();
     println!(
-      "Ball altitude: {}",
-      ball_body.unwrap().translation().y
+      "rigidBody: {}, time: {}",
+      ball_body.translation(), i
     );
+
+    let ball_collider = physicsManager.getCollider(colliderHandle);
+    println!(
+      "collider: {}, time: {}",
+      ball_collider.translation(), i
+    );
+    
   }
 }

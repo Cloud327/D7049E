@@ -29,8 +29,9 @@ impl PhysicsManager{
         let event_handler = ChannelEventCollector::new(sender);
         Self {
             /* Create other structures necessary for the simulation. */
-            gravity: vector![0.0, 0.0, 0.0],
+            //gravity: vector![0.0, 0.0, 0.0],
             //gravity: vector![0.0, -1.62, 0.0],
+            gravity: vector![0.0, -9.81, 0.0],
             integrationParameters: IntegrationParameters::default(),
             physicsPipeline: PhysicsPipeline::new(),
             islandManager: IslandManager::new(),
@@ -87,16 +88,17 @@ impl PhysicsManager{
         return self.rigidBodySet.get_mut(rigidBodyHandle);
     }
 
-    pub fn getCollider(&self, colliderHandle: ColliderHandle) -> &Collider{
-        return &self.colliderSet[colliderHandle];
+    pub fn getCollider(&mut self, colliderHandle: ColliderHandle) -> &mut Collider{
+        return &mut self.colliderSet[colliderHandle];
     }
 
     pub fn removeCollider(&mut self, handle: ColliderHandle){
         self.colliderSet.remove(handle, &mut self.islandManager, &mut self.rigidBodySet, true);
     }
 
-    pub fn removeRigidBodyWithCollider(&mut self, handle: Index){
-        self.rigidBodySet.remove(RigidBodyHandle(handle), &mut self.islandManager, &mut self.colliderSet, &mut self.impulseJointSet, &mut self.multibody_joint_set, true);
+    pub fn removeRigidBodyWithCollider(&mut self, handle: ColliderHandle){
+
+        self.rigidBodySet.remove(self.colliderSet.get(handle).unwrap().parent().unwrap(), &mut self.islandManager, &mut self.colliderSet, &mut self.impulseJointSet, &mut self.multibody_joint_set, true);
 
     }
 

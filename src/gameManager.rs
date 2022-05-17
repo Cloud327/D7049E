@@ -376,7 +376,7 @@ impl GameManager{
 
         if let EventEnum::removeObjectEvent{id, colliderHandle} = event {
             self.entityManager.removeObject(id);
-            self.physicsManager.removeRigidBodyWithCollider(colliderHandle.0);
+            self.physicsManager.removeRigidBodyWithCollider(colliderHandle);
             //self.window.remove_node(sceneNode from renderableComponent);
         }
 

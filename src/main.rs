@@ -16,7 +16,7 @@ mod gameStateEnum;
 
 fn main() {
 
-    gameManager::test();
+    colliderTest::run();
     //colliderTest::run();
 
 
