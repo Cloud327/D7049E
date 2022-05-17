@@ -36,6 +36,10 @@ use std::sync::{Arc, Mutex, mpsc};
 /*
 TODO:
 
+fix waves/win condition
+
+remove scenenode of removed object
+
 add game lost condition somewhere
 
 if base's healthComponent = 0:      // Make sure we don't delete base object before saying game over
@@ -92,7 +96,7 @@ impl GameManager{
         self.nodeHandler.addNodes(TypeEnum::projectileType, Path::new("src/resources/genji-shuriken.obj"), Path::new("src/resources/genji-shuriken.mtl"));
         
         // Initialize map
-        self.mapManager.parseMap();
+        self.mapManager.parseMap("src/resources/map2.csv");
         self.mapManager.drawMap(&mut self.window);
         self.createBase();
 
@@ -160,7 +164,6 @@ impl GameManager{
         });
 
         loop{
-
             // Check TowerAttack thread for receives
             let receivedTowerAttack = rxTowerAttack.try_recv();
             match receivedTowerAttack {
@@ -176,8 +179,6 @@ impl GameManager{
             }
 
             self.physicsManager.step();
-
-            //self.updateNodes();
             
             // Adds functionality to close window by pressing escape
             let escape = self.window.get_key(Key::Escape);
@@ -195,14 +196,11 @@ impl GameManager{
                 }                
             }
 
-            //self.checkGame();
-
             while !self.eventManager.eventBufferIsEmpty(){
                 self.doEvent();
             }
 
             self.updateNodes();
-
 
             loop{
                 // Do this a lot more than just once per frame
@@ -213,8 +211,6 @@ impl GameManager{
                 }
             }
             
-            
-
             if matches!(self.gameState, GameStateEnum::won){
                 let font = Font::default();
                 let pos = Point2::new(self.window.width()as f32/2.0 , self.window.height()as f32/2.0);
@@ -227,7 +223,6 @@ impl GameManager{
             }
 
             self.window.render_with_camera(&mut first_person);
-            // self.window.render();
         }
     }
 
@@ -239,7 +234,6 @@ impl GameManager{
         let collider1 = collision.collider1();
         let collider2 = collision.collider2();
         let mut types: Vec<(TypeEnum, &mut IdComponent,&mut AttackDamageComponent, &mut ColliderComponent, &mut RenderableComponent)> = Vec::new();
-        let mut actualTypes: Vec<&mut TypeComponent> = Vec::new();
 
         let mut colliderCompList = self.entityManager.borrowComponentVecMut::<ColliderComponent>().unwrap();
         let mut idCompList = self.entityManager.borrowComponentVecMut::<IdComponent>().unwrap();
@@ -254,7 +248,6 @@ impl GameManager{
         for (colliderComp, idComp, typeComp, damageComp, renderComp) in iter{
             if colliderComp.getColliderHandle().0 == collider1.0 || colliderComp.getColliderHandle().0 == collider2.0{ 
                 types.push((typeComp.getType(), idComp, damageComp, colliderComp, renderComp));
-                actualTypes.push(typeComp);
             }
         }
 
@@ -265,24 +258,13 @@ impl GameManager{
         if obj1.is_some() && obj2.is_some(){
             let obj1 = obj1.unwrap();
             let obj2 = obj2.unwrap();
-
-            let a = actualTypes.pop().unwrap();
-            let b = actualTypes.pop().unwrap();
-            // println!("obj1 type: {} - obj2 type: {}", a.getTypeString(obj1.0), b.getTypeString(obj2.0));
-
-            // println!("For id={} and type= {}, the position collider is: {} ", obj2.1.getId(), b.getTypeString(obj2.0), self.physicsManager.getCollider(obj2.3.getColliderHandle()).translation());
-            // let temp = self.physicsManager.getCollider(obj2.3.getColliderHandle()).parent().unwrap();
-            // println!("For id={} the position rigidbody is: {} ", obj2.1.getId(), self.physicsManager.getRigidBody(temp).unwrap().translation());
-            // println!("for id={} and type= {}, the position of scenenode is: {} ", obj2.1.getId(), b.getTypeString(obj2.0), obj2.4.getSceneNode().read().unwrap().data().local_translation());
            
             if matches!(obj1.0, TypeEnum::enemyType){
                 if matches!(obj2.0, TypeEnum::projectileType){
-                    println!("enemy & projectile");
                     self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj1.1.getId(), damage: obj2.2.getAttackDamage() as usize});
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId(), colliderHandle: obj2.3.getColliderHandle()});
                 }
                 else if matches!(obj2.0, TypeEnum::baseType){
-                    println!("enemy & base");
                     self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj2.1.getId(), damage: obj1.2.getAttackDamage() as usize});
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId(), colliderHandle: obj1.3.getColliderHandle()});
                 }
@@ -290,19 +272,16 @@ impl GameManager{
     
             else if matches!(obj1.0, TypeEnum::projectileType){
                 if matches!(obj2.0, TypeEnum::enemyType){
-                    println!("projectile & enemy");
                     self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj2.1.getId(), damage: obj1.2.getAttackDamage() as usize});
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId(), colliderHandle: obj1.3.getColliderHandle()});
                 }
                 else if matches!(obj2.0, TypeEnum::wallType){
-                    println!("projectile & wall");
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId(), colliderHandle: obj1.3.getColliderHandle()});
                 }
             }
     
             else if matches!(obj1.0, TypeEnum::baseType){
                 if matches!(obj2.0, TypeEnum::enemyType){
-                    println!("base & enemy");
                     self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj1.1.getId(), damage: obj2.2.getAttackDamage() as usize});
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId(), colliderHandle: obj2.3.getColliderHandle()});
                 }
@@ -310,7 +289,6 @@ impl GameManager{
     
             else if matches!(obj1.0, TypeEnum::wallType){
                 if matches!(obj2.0, TypeEnum::projectileType){
-                    println!("wall & projectile");
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId(), colliderHandle: obj2.3.getColliderHandle()});
                 }
             }
@@ -322,7 +300,6 @@ impl GameManager{
     fn checkEnemies(&mut self, waveSender: &Sender<bool>){
         let mut enemyOnMap = false;
 
-        //let mut healthCompList = self.entityManager.borrowComponentVecMut::<HealthComponent>().unwrap();
         let mut rigidBodyCompList = self.entityManager.borrowComponentVecMut::<RigidBodyComponent>().unwrap();
         let mut typeCompList = self.entityManager.borrowComponentVecMut::<TypeComponent>().unwrap();
         let zip = rigidBodyCompList.iter_mut().zip(typeCompList.iter_mut());
@@ -340,7 +317,6 @@ impl GameManager{
 
         if !enemyOnMap{
             // Spawn new wave or won game
-            // if no more waves:
             let currentWave = *self.gameParameters.get("currentWave").unwrap();
             let finalWave = *self.gameParameters.get("finalWave").unwrap();
             println!("currentWave: {}", currentWave);
@@ -374,7 +350,6 @@ impl GameManager{
             for (healthComp, idComp, colliderComp, renderComp) in iter {
                 if idComp.getId() == id {
                     healthComp.decreaseHealth(damage);
-                    println!("hp on id={} after taking damage: {}", idComp.getId(), healthComp.getHealth());
                     if healthComp.getHealth() == 0{
                         self.eventManager.sendEvent(EventEnum::removeObjectEvent { id:idComp.getId(), colliderHandle: colliderComp.getColliderHandle()})
                     }
@@ -409,18 +384,6 @@ impl GameManager{
             }
 
         }
-
-        // Create the necessary components for a tower
-        // if let EventEnum::spawnTowerEvent{x, y, z} = event {
-        //     self.spawnTower(x as f32, y as f32, z as f32);
-        // }
-
-        // Create the necessary components for an enemy and sets translation at start point of map
-        // if let EventEnum::spawnEnemyEvent = event {
-        //     self.spawnEnemy();
-        // }
-
-        // All events here
     }
 
 
@@ -454,19 +417,9 @@ impl GameManager{
                 axisangle[1] = axisangle[1]* axis * r.angle();
                 let r = UnitQuaternion::new(axisangle);
 
-                //let t = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).translation();
                 // Sets the renderableComponent node coordinates to the rigidBody coordinates
                 node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
                 node.write().unwrap().set_local_rotation(r);
-                // self.physicsManager.getCollider(colliderComp.getColliderHandle()).set_translation(vector![t.0, t.1, t.2]);
-
-
-                // println!("The position of collider is: {} ", self.physicsManager.getCollider(colliderComp.getColliderHandle()).translation());
-                // let temp = self.physicsManager.getCollider(obj2.3.getColliderHandle()).parent().unwrap();
-                // println!("For id={} the position rigidbody is: {} ", obj2.1.getId(), self.physicsManager.getRigidBody(temp).unwrap().translation());
-                // println!("The position of scenenode is: {}, {}, {} ", t.0, t.1, t.2);
-
-
             }
             if matches!(typeComp.getType(), TypeEnum::projectileType){
                 let node = renderComp.getSceneNode();
@@ -488,7 +441,6 @@ impl GameManager{
         let t = (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
         // If the enemy is located near enough the next point, then remove it and use the new next point in the sequence
         if  (nextPoint.0 - 0.3) < t.0 && t.0 < (nextPoint.0 + 0.3) && (nextPoint.1 - 0.3) < t.2 && t.2 < (nextPoint.1 + 0.3){
-            // nextPoint = moveComp.popAndGetNextPoint();
             match moveComp.popAndGetNextPoint() {
                 Some(n) => nextPoint = n,
                 None => (),
@@ -528,7 +480,6 @@ impl GameManager{
 
 
     fn spawnProjectile(&mut self, xTarget:  f32, yTarget: f32, zTarget: f32, xOrigin: f32, yOrigin: f32, zOrigin: f32){
-        //TODO: Add ability to move
         let projectile = self.entityManager.newObject();
         self.entityManager.addComponentToObject(projectile, TypeComponent::new(TypeEnum::projectileType));
         self.entityManager.addComponentToObject(projectile, AttackDamageComponent::new(*self.gameParameters.get("towerAttackDamage").unwrap()));
@@ -694,20 +645,8 @@ impl GameManager{
 }
 
 
-pub fn test(){
-
+pub fn main(){
     let mut gm = GameManager::new();
     gm.initialize();
-
-    //gm.spawnEnemy();
-    //gm.spawnTower(2.0, 0.3, 4.0);
-    //gm.spawnProjectile(5.0, 5.0, 5.0, 3.0, 1.0, 10.0);
-
     gm.gameloop();
-
-    // gm.eventManager.sendEvent(EventEnum::towerAttackEvent{x: 55, y: 20, z: 2});
-    // gm.eventManager.sendEvent(EventEnum::takeDamageEvent { id: 2, damage: 10 });
-    
-    // gm.doEvent();
-    // gm.doEvent();
 }
