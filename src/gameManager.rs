@@ -5,9 +5,8 @@ use kiss3d::camera::FirstPerson;
 use kiss3d::text::Font;
 use ::nalgebra::{Translation3, Vector3};
 use rand::Rng;
-use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody, ActiveEvents, CollisionEvent, ColliderHandle};
+use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody, ActiveEvents, CollisionEvent};
 use std::collections::HashMap;
-use std::ops::Not;
 use std::path::Path;
 use std::sync::mpsc::{Sender, Receiver};
 use crate::ECS::Components::attackRateComponent::AttackRateComponent;
@@ -20,18 +19,17 @@ use crate::gameStateEnum::GameStateEnum;
 use crate::mapManager::MapManager;
 use crate::nodeHandler::NodeHandler;
 use crate::physicsManager::PhysicsManager;
-use kiss3d::scene::SceneNode;
 use kiss3d::{window::Window, event::Action};
 use kiss3d::light::Light;
-use kiss3d::event::{Key, MouseButton, WindowEvent};
+use kiss3d::event::{Key};
 
 use rapier3d::na::{self as nalgebra};
 use rapier3d::prelude::AngVector;
-use na::{Matrix4, vector, UnitQuaternion, Point2, Point3};
+use na::{vector, UnitQuaternion, Point2, Point3};
 
-use std::thread::{self, JoinHandle};
+use std::thread::{self};
 use std::time::Duration;
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::{mpsc};
 
 /*
 TODO:
@@ -65,7 +63,7 @@ impl GameManager{
             ("projectileSpeed", 10.0),
             ("towerAttackRate", 2.0),  // How many seconds between each attack
             ("finalWave", 2.0),
-            ("currentWave", 1.0),
+            ("currentWave", 0.0),
         ]);
         Self {
             entityManager: EntityManager::new(),
