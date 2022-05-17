@@ -36,12 +36,6 @@ use std::sync::{Arc, Mutex, mpsc};
 /*
 TODO:
 
-colliders not moving?
-
-fix collisionevents:
-    removeObjects in entityManager
-    remove sceneNode from renderableComponent
-
 add game lost condition somewhere
 
 if base's healthComponent = 0:      // Make sure we don't delete base object before saying game over
@@ -64,16 +58,16 @@ pub struct GameManager{
 impl GameManager{
     pub fn new() -> Self {
         let gameParameters = HashMap::from([
-            ("towerAttackDamage", 1.0),
+            ("towerAttackDamage", 10.0),
             ("enemyAttackDamage", 1.0),
             ("enemyHealth", 50.0),
             ("baseHealth", 10.0),
             ("enemyHeight", 1.0),
             ("towerHeight", 0.3),
-            ("enemySpeed", 1.0),
+            ("enemySpeed", 2.0),
             ("projectileSpeed", 10.0),
             ("towerAttackRate", 2.0),  // How many seconds between each attack
-            ("finalWave", 4.0),
+            ("finalWave", 10.0),
             ("currentWave", 1.0),
         ]);
         Self {
@@ -257,7 +251,6 @@ impl GameManager{
         let iter = zip.filter_map(|(colliderComp, (idComp, (typeComp, (damageComp, renderComp)))),
                                                                     |Some((colliderComp.as_mut()?, idComp.as_mut()?, typeComp.as_mut()?, damageComp.as_mut()?, renderComp.as_mut()?)));
             
-        /* Loop through all objects and if it's an enemy then move it */
         for (colliderComp, idComp, typeComp, damageComp, renderComp) in iter{
             if colliderComp.getColliderHandle().0 == collider1.0 || colliderComp.getColliderHandle().0 == collider2.0{ 
                 types.push((typeComp.getType(), idComp, damageComp, colliderComp, renderComp));
@@ -269,7 +262,6 @@ impl GameManager{
         let obj2 = types.pop();
 
         
-
         if obj1.is_some() && obj2.is_some(){
             let obj1 = obj1.unwrap();
             let obj2 = obj2.unwrap();
@@ -469,10 +461,10 @@ impl GameManager{
                 // self.physicsManager.getCollider(colliderComp.getColliderHandle()).set_translation(vector![t.0, t.1, t.2]);
 
 
-                println!("The position of collider is: {} ", self.physicsManager.getCollider(colliderComp.getColliderHandle()).translation());
+                // println!("The position of collider is: {} ", self.physicsManager.getCollider(colliderComp.getColliderHandle()).translation());
                 // let temp = self.physicsManager.getCollider(obj2.3.getColliderHandle()).parent().unwrap();
                 // println!("For id={} the position rigidbody is: {} ", obj2.1.getId(), self.physicsManager.getRigidBody(temp).unwrap().translation());
-                println!("The position of scenenode is: {}, {}, {} ", t.0, t.1, t.2);
+                // println!("The position of scenenode is: {}, {}, {} ", t.0, t.1, t.2);
 
 
             }
@@ -531,7 +523,7 @@ impl GameManager{
         self.entityManager.addComponentToObject(base, AttackDamageComponent::new(0.0));
 
         self.createRenderComponent(base, TypeEnum::baseType, endCoords.0, 0.2, endCoords.1, 0.007);
-        self.createRigidBodyAndColliderComponents(base, TypeEnum::baseType, endCoords.0, 0.2, endCoords.1, (0.0, 0.0, 0.0), ColliderShape::cuboid(1.5, 10.0, 1.5));
+        self.createRigidBodyAndColliderComponents(base, TypeEnum::baseType, endCoords.0, 0.2, endCoords.1, (0.0, 0.0, 0.0), ColliderShape::cuboid(1.0, 10.0, 1.0));
     }
 
 
@@ -551,7 +543,7 @@ impl GameManager{
 
         self.createRenderComponent(projectile, TypeEnum::projectileType,  xOrigin, yOrigin, zOrigin, 0.06);
         self.createRigidBodyAndColliderComponents(projectile, TypeEnum::projectileType, 
-                     xOrigin, yOrigin, zOrigin, (xVelocity, yVelocity, zVelocity), ColliderShape::ball(0.3));
+                     xOrigin, yOrigin, zOrigin, (xVelocity, yVelocity, zVelocity), ColliderShape::ball(0.2));
     }
 
 
@@ -612,23 +604,25 @@ impl GameManager{
 
     fn createRigidBodyAndColliderComponents(&mut self, id: usize, objectType: TypeEnum, x: f32, y: f32, z: f32, velocity: (f32, f32, f32), colliderShape: ColliderShape){
         // Add RigidBody to PhysicsManager and RigidBodyHandle to RigidBodyComponent (like an index) with a translation 
-        let body = RigidBodyBuilder::new(RigidBodyType::Dynamic);
-        let mut body = body.translation(vector![x, y, z]).build();
+        let bodyBuilder = RigidBodyBuilder::new(RigidBodyType::Dynamic);
+        let mut body = bodyBuilder.translation(vector![x, y, z]).build();
 
         // Sets a velocity for projectiles
         if matches!(objectType, TypeEnum::projectileType){
-            let body = body.set_linvel(vector![velocity.0, velocity.1, velocity.2], true);
+            body.set_linvel(vector![velocity.0, velocity.1, velocity.2], true);
         }
 
         let rigidBodyHandle = self.physicsManager.addRigidBody(body);
         self.entityManager.addComponentToObject(id, RigidBodyComponent::new(rigidBodyHandle));
 
         // Add Collider to PhysicsManager and ColliderHandle to ColliderComponent (like an index) with a translation 
-        let collider = ColliderBuilder::new(colliderShape);
-        let collider = collider.translation(vector![x, y, z]).sensor(true).active_events(ActiveEvents::COLLISION_EVENTS).build();
-        // let colliderHandle = self.physicsManager.addCollider(collider);
+        let colliderBuilder = ColliderBuilder::new(colliderShape);
+        let collider = colliderBuilder.sensor(true).active_events(ActiveEvents::COLLISION_EVENTS).build();
         let colliderHandle = self.physicsManager.addColliderWithParent(collider, rigidBodyHandle);
+        
         self.entityManager.addComponentToObject(id, ColliderComponent::new(colliderHandle));
+
+        
     }
 
     fn createWalls(&mut self){
