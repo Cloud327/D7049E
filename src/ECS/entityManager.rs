@@ -40,7 +40,7 @@ impl EntityManager{
      */
     pub fn removeObject(&mut self, idToRemove:usize) {
 
-        println!("removing object at id {}",idToRemove);
+        // println!("removing object at id {}",idToRemove);
 
         // step 1: find index of idToRemove
         let mut idCompList = self.borrowComponentVecMut::<IdComponent>().unwrap();

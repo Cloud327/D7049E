@@ -1,3 +1,4 @@
+use kiss3d::scene::SceneNode;
 use rapier3d::prelude::ColliderHandle;
 
 use super::{typeEnum::TypeEnum, Components::{typeComponent::TypeComponent, renderableComponent::RenderableComponent}};
