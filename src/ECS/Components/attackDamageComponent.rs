@@ -10,10 +10,6 @@ impl AttackDamageComponent{
         }
     }
 
-    pub fn update(){
-
-    }
-
     pub fn getAttackDamage(&self) -> f32{
         return self.attackDamage;
     }

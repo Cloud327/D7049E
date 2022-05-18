@@ -5,7 +5,7 @@ use kiss3d::camera::FirstPerson;
 use kiss3d::text::Font;
 use ::nalgebra::{Translation3, Vector3};
 use rand::Rng;
-use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody, ActiveEvents, CollisionEvent};
+use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody, ActiveEvents, CollisionEvent, InteractionGroups};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::mpsc::{Sender, Receiver};
@@ -31,12 +31,6 @@ use std::thread::{self};
 use std::time::{Duration, SystemTime};
 use std::sync::{mpsc};
 
-/*
-TODO:
-
-remove scenenode of removed object
-
-*/
 
 pub struct GameManager{
     entityManager: EntityManager,
@@ -53,18 +47,18 @@ pub struct GameManager{
 impl GameManager{
     pub fn new() -> Self {
         let gameParameters = HashMap::from([
-            ("towerAttackDamage", 5.0),
-            ("enemyAttackDamage", 1.0),
-            ("enemyHealth", 50.0),
-            ("baseHealth", 1.0),
-            ("enemyHeight", 1.0),
-            ("towerHeight", 0.25),
-            ("enemySpeed", 4.0),
-            ("projectileSpeed", 14.0),
-            ("towerAttackRate", 1000.0),  // How many seconds between each attack
-            ("finalWave", 20.0),
-            ("currentWave", 0.0),
-            ("enemySpawnRate", 500.0),
+            ("towerAttackDamage", 5.0),     // Damage towers do per attack
+            ("enemyAttackDamage", 1.0),     // Damage enemies do when reaching the base
+            ("enemyHealth", 50.0),          // HP of enemies
+            ("baseHealth", 1.0),            // HP of the base
+            ("enemyHeight", 1.0),           // Y-coord for where the enemies spawn and fly
+            ("towerHeight", 0.25),          // Y-coord for where the towers spawn
+            ("enemySpeed", 4.0),            // How fast the enemies are
+            ("projectileSpeed", 14.0),      // How fast the projectiles are
+            ("towerAttackRate", 1000.0),    // Milliseconds between each tower attack
+            ("finalWave", 20.0),            // Number of enemy waves
+            ("currentWave", 0.0),           // Start wave, do not change please
+            ("enemySpawnRate", 500.0),      // Milliseconds between enemy spawns within a wave
         ]);
         Self {
             entityManager: EntityManager::new(),
@@ -88,7 +82,7 @@ impl GameManager{
         self.nodeHandler.addNodes(TypeEnum::projectileType, Path::new("src/resources/genji-shuriken.obj"), Path::new("src/resources/genji-shuriken.mtl"));
         
         // Initialize map
-        self.mapManager.parseMap("src/resources/map2.csv");
+        self.mapManager.parseMap("src/resources/map.csv");
         self.mapManager.drawMap(&mut self.window);
         self.createBase();
 
@@ -103,8 +97,8 @@ impl GameManager{
 
         self.window.set_light(Light::StickToCamera);
         self.window.set_background_color(0.5, 0.7, 1.0);
-        
     }
+
 
     pub fn gameloop(&mut self){
 
@@ -219,6 +213,7 @@ impl GameManager{
                 self.window.draw_text("You lose! :(", &pos, 250.0, &font, &Point3::new(0.0, 0.0, 0.4));
             }
 
+            // Measure the simulation time per update (excluding rendering)
             match startTime.elapsed() {
                 Ok(elapsed) => {
                     // it prints '2'
@@ -392,7 +387,7 @@ impl GameManager{
             let coordList = self.mapManager.getTowerLocations();
             for coords in coordList{
                 self.spawnProjectile(xTarget, yTarget, zTarget, 
-                                        coords.0, *self.gameParameters.get("enemyHeight").unwrap(), coords.1);
+                                        coords.0, *self.gameParameters.get("towerHeight").unwrap(), coords.1);
             }
         }
 
@@ -595,7 +590,17 @@ impl GameManager{
 
         // Add Collider to PhysicsManager and ColliderHandle to ColliderComponent (like an index) with a translation 
         let colliderBuilder = ColliderBuilder::new(colliderShape);
-        let collider = colliderBuilder.sensor(true).active_events(ActiveEvents::COLLISION_EVENTS).build();
+        let mut collider = colliderBuilder.sensor(true).active_events(ActiveEvents::COLLISION_EVENTS);
+
+        if matches!(objectType, TypeEnum::projectileType){
+            collider = collider.collision_groups(InteractionGroups::new(0b0010, 0b0001));
+        }
+
+        else if matches!(objectType, TypeEnum::enemyType){
+            collider = collider.collision_groups(InteractionGroups::new(0b0001, 0b0010));
+        }
+
+        let collider = collider.build();
         let colliderHandle = self.physicsManager.addColliderWithParent(collider, rigidBodyHandle);
         
         self.entityManager.addComponentToObject(id, ColliderComponent::new(colliderHandle));  

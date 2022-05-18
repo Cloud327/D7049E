@@ -18,10 +18,6 @@ impl RenderableComponent{
 
     }
 
-    pub fn update(&mut self){
-
-    }
-
     pub fn getSceneNode(&mut self) -> &mut SceneNode{
         return &mut self.sceneNode;
     }
