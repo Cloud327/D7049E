@@ -82,7 +82,7 @@ impl GameManager{
         self.nodeHandler.addNodes(TypeEnum::projectileType, Path::new("src/resources/genji-shuriken.obj"), Path::new("src/resources/genji-shuriken.mtl"));
         
         // Initialize map
-        self.mapManager.parseMap("src/resources/map.csv");
+        self.mapManager.parseMap("src/resources/map2.csv");
         self.mapManager.drawMap(&mut self.window);
         self.createBase();
 
