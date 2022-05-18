@@ -10,10 +10,6 @@ impl HealthComponent{
             health: health
         }
     }
-
-    pub fn update(){
-
-    }
     
     pub fn increaseHealth(&mut self, value:usize){
         self.health += value;

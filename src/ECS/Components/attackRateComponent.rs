@@ -9,10 +9,6 @@ impl AttackRateComponent{
             attackRate: atkRate,
         }
     }
-
-    pub fn update(){
-
-    }
     
     pub fn getAttackRate(&self) -> f32{
         return self.attackRate;

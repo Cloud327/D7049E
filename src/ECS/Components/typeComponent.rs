@@ -12,14 +12,11 @@ impl TypeComponent{
         }
     }
 
-    pub fn update(){
-
-    }
-
     pub fn getType(&self) -> TypeEnum{
         return self.objectType
     }
 
+    // Help funciton for debug
     pub fn getTypeString(&self, objectType: TypeEnum) -> &str{
         if matches!(objectType, TypeEnum::enemyType){
             return "Enemy";

@@ -5,7 +5,7 @@ use kiss3d::camera::FirstPerson;
 use kiss3d::text::Font;
 use ::nalgebra::{Translation3, Vector3};
 use rand::Rng;
-use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody, ActiveEvents, CollisionEvent};
+use rapier3d::prelude::{ColliderBuilder, RigidBodyBuilder, RigidBodyType, ColliderShape, RigidBody, ActiveEvents, CollisionEvent, InteractionGroups};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::mpsc::{Sender, Receiver};
@@ -28,15 +28,9 @@ use rapier3d::prelude::AngVector;
 use na::{vector, UnitQuaternion, Point2, Point3};
 
 use std::thread::{self};
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 use std::sync::{mpsc};
 
-/*
-TODO:
-
-remove scenenode of removed object
-
-*/
 
 pub struct GameManager{
     entityManager: EntityManager,
@@ -53,17 +47,18 @@ pub struct GameManager{
 impl GameManager{
     pub fn new() -> Self {
         let gameParameters = HashMap::from([
-            ("towerAttackDamage", 10.0),
-            ("enemyAttackDamage", 1.0),
-            ("enemyHealth", 50.0),
-            ("baseHealth", 1.0),
-            ("enemyHeight", 1.0),
-            ("towerHeight", 0.3),
-            ("enemySpeed", 2.0),
-            ("projectileSpeed", 10.0),
-            ("towerAttackRate", 2.0),  // How many seconds between each attack
-            ("finalWave", 2.0),
-            ("currentWave", 0.0),
+            ("towerAttackDamage", 5.0),     // Damage towers do per attack
+            ("enemyAttackDamage", 1.0),     // Damage enemies do when reaching the base
+            ("enemyHealth", 50.0),          // HP of enemies
+            ("baseHealth", 1.0),            // HP of the base
+            ("enemyHeight", 1.0),           // Y-coord for where the enemies spawn and fly
+            ("towerHeight", 0.25),          // Y-coord for where the towers spawn
+            ("enemySpeed", 4.0),            // How fast the enemies are
+            ("projectileSpeed", 14.0),      // How fast the projectiles are
+            ("towerAttackRate", 1000.0),    // Milliseconds between each tower attack
+            ("finalWave", 20.0),            // Number of enemy waves
+            ("currentWave", 0.0),           // Start wave, do not change please
+            ("enemySpawnRate", 500.0),      // Milliseconds between enemy spawns within a wave
         ]);
         Self {
             entityManager: EntityManager::new(),
@@ -102,8 +97,8 @@ impl GameManager{
 
         self.window.set_light(Light::StickToCamera);
         self.window.set_background_color(0.5, 0.7, 1.0);
-        
     }
+
 
     pub fn gameloop(&mut self){
 
@@ -111,22 +106,32 @@ impl GameManager{
         let at = Point3::new(100.0f32, 1.0, 100.0);
         let mut first_person = FirstPerson::new(eye, at);
 
+        let (spawnEnemySender, spawnEnemyReciever) = mpsc::channel();
+        let (nextWaveSender, nextWaveReciever) = mpsc::channel();
+        let (waveProgressSender, waveProgressReceiver) = mpsc::channel();
+        let (enemySpawnRateSender, enemySpawnRateReceiver) = mpsc::channel();
+        let (towerAttackRateSender, towerAttackRateReceiver) = mpsc::channel();
+
+        enemySpawnRateSender.send(*self.gameParameters.get("enemySpawnRate").unwrap() as u64);
+        towerAttackRateSender.send(*self.gameParameters.get("towerAttackRate").unwrap() as u64);
+
         // thread for towers to attack
         let (txTowerAttack, rxTowerAttack) = mpsc::channel();
         thread::spawn(move || {
+            let towerAttackRate = towerAttackRateReceiver.recv().unwrap(); 
+
             loop {
                 let val = String::from("kill enemies now please :)");
                 txTowerAttack.send(val).unwrap();
-                thread::sleep(Duration::from_millis(2000));     // Set to same as towerAttackRate
+                thread::sleep(Duration::from_millis(towerAttackRate));     // Set to same as towerAttackRate
             }
         });
         
         // thread for bird spawning
-        let (spawnEnemySender, spawnEnemyReciever) = mpsc::channel();
-        let (nextWaveSender, nextWaveReciever) = mpsc::channel();
-        let (waveProgressSender, waveProgressReceiver) = mpsc::channel();
         thread::spawn(move || {
             let mut waveNumberEnemies = 2;
+            let enemySpawnRate = enemySpawnRateReceiver.recv().unwrap(); 
+
             loop {
                 // only spawn a wave when told to do so by nextWaveReciever
                 // wait until we recieve a call do spawn a wave
@@ -135,7 +140,7 @@ impl GameManager{
                 // spawns waveNumberEnemies enemies with 2000 ms between each, 
                 for _ in 0..waveNumberEnemies{
                     spawnEnemySender.send(true).unwrap();
-                    thread::sleep(Duration::from_millis(2000));
+                    thread::sleep(Duration::from_millis(enemySpawnRate));
                 }
 
                 waveProgressSender.send(true);
@@ -146,6 +151,8 @@ impl GameManager{
         });
 
         loop{
+            let startTime = SystemTime::now();
+            
             // Check TowerAttack thread for receives
             let receivedTowerAttack = rxTowerAttack.try_recv();
             match receivedTowerAttack {
@@ -206,6 +213,18 @@ impl GameManager{
                 self.window.draw_text("You lose! :(", &pos, 250.0, &font, &Point3::new(0.0, 0.0, 0.4));
             }
 
+            // Measure the simulation time per update (excluding rendering)
+            match startTime.elapsed() {
+                Ok(elapsed) => {
+                    // it prints '2'
+                    println!("{} ms", elapsed.as_millis());
+                }
+                Err(e) => {
+                    // an error occurred!
+                    println!("Error: {:?}", e);
+                }
+            }
+
             self.window.render_with_camera(&mut first_person);
         }
     }
@@ -232,6 +251,9 @@ impl GameManager{
         for (colliderComp, idComp, typeComp, damageComp, renderComp) in iter{
             if colliderComp.getColliderHandle().0 == collider1.0 || colliderComp.getColliderHandle().0 == collider2.0{ 
                 types.push((typeComp.getType(), idComp, damageComp, colliderComp, renderComp));
+                if types.len() == 2{
+                    break;
+                }
             }
         }
 
@@ -247,10 +269,12 @@ impl GameManager{
                 if matches!(obj2.0, TypeEnum::projectileType){
                     self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj1.1.getId(), damage: obj2.2.getAttackDamage() as usize});
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId(), colliderHandle: obj2.3.getColliderHandle()});
+                    self.window.remove_node(obj2.4.getSceneNode());
                 }
                 else if matches!(obj2.0, TypeEnum::baseType){
                     self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj2.1.getId(), damage: obj1.2.getAttackDamage() as usize});
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId(), colliderHandle: obj1.3.getColliderHandle()});
+                    self.window.remove_node(obj1.4.getSceneNode());
                 }
             }
     
@@ -258,9 +282,11 @@ impl GameManager{
                 if matches!(obj2.0, TypeEnum::enemyType){
                     self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj2.1.getId(), damage: obj1.2.getAttackDamage() as usize});
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId(), colliderHandle: obj1.3.getColliderHandle()});
+                    self.window.remove_node(obj1.4.getSceneNode());
                 }
                 else if matches!(obj2.0, TypeEnum::wallType){
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj1.1.getId(), colliderHandle: obj1.3.getColliderHandle()});
+                    self.window.remove_node(obj1.4.getSceneNode());
                 }
             }
     
@@ -268,12 +294,14 @@ impl GameManager{
                 if matches!(obj2.0, TypeEnum::enemyType){
                     self.eventManager.sendEvent(EventEnum::takeDamageEvent { id: obj1.1.getId(), damage: obj2.2.getAttackDamage() as usize});
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId(), colliderHandle: obj2.3.getColliderHandle()});
+                    self.window.remove_node(obj2.4.getSceneNode());
                 }
             }
     
             else if matches!(obj1.0, TypeEnum::wallType){
                 if matches!(obj2.0, TypeEnum::projectileType){
                     self.eventManager.sendEvent(EventEnum::removeObjectEvent { id: obj2.1.getId(), colliderHandle: obj2.3.getColliderHandle()});
+                    self.window.remove_node(obj2.4.getSceneNode());
                 }
             }
         }
@@ -305,9 +333,6 @@ impl GameManager{
             // if no more waves:
             let currentWave = *self.gameParameters.get("currentWave").unwrap();
             let finalWave = *self.gameParameters.get("finalWave").unwrap();
-            println!("currentWave: {}", currentWave);
-            println!("finalWave: {}", finalWave);
-
 
             let waveInProgressChannel = waveProgressReceiver.try_recv();
             let startNextWave;
@@ -316,14 +341,13 @@ impl GameManager{
                 Err(_) => startNextWave = true,
             }
 
-
             if currentWave >= finalWave && !startNextWave{
                 self.gameState = GameStateEnum::won;
             } else if (startNextWave){
                 waveSender.send(true);
                 self.gameParameters.insert("currentWave", currentWave + 1.0).unwrap();
-            }
-            
+                println!("Starting wave {} out of {}", currentWave, finalWave);
+            }            
         }
     }
 
@@ -349,7 +373,8 @@ impl GameManager{
                             self.gameState = GameStateEnum::lost;
                         }
                         else{
-                            self.eventManager.sendEvent(EventEnum::removeObjectEvent { id:idComp.getId(), colliderHandle: colliderComp.getColliderHandle()})
+                            self.eventManager.sendEvent(EventEnum::removeObjectEvent { id:idComp.getId(), colliderHandle: colliderComp.getColliderHandle()});
+                            self.window.remove_node(renderComp.getSceneNode());
                         }
                     }
                 } 
@@ -362,7 +387,7 @@ impl GameManager{
             let coordList = self.mapManager.getTowerLocations();
             for coords in coordList{
                 self.spawnProjectile(xTarget, yTarget, zTarget, 
-                                        coords.0, *self.gameParameters.get("enemyHeight").unwrap(), coords.1);
+                                        coords.0, *self.gameParameters.get("towerHeight").unwrap(), coords.1);
             }
         }
 
@@ -379,9 +404,7 @@ impl GameManager{
             if idExists == true{
                 self.entityManager.removeObject(id);
                 self.physicsManager.removeRigidBodyWithCollider(colliderHandle);
-                // self.window.remove_node(node);
             }
-
         }
     }
 
@@ -417,16 +440,16 @@ impl GameManager{
                 let r = UnitQuaternion::new(axisangle);
 
                 // Sets the renderableComponent node coordinates to the rigidBody coordinates
-                node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
-                node.write().unwrap().set_local_rotation(r);
+                node.set_local_translation(Translation3::new(t.0, t.1, t.2));
+                node.set_local_rotation(r);
             }
             if matches!(typeComp.getType(), TypeEnum::projectileType){
                 let node = renderComp.getSceneNode();
 
                 let rigidBody = self.physicsManager.getRigidBody(rigidComp.getRigidBodyHandle()).unwrap();
                 let t = (rigidBody.translation()[0], rigidBody.translation()[1], rigidBody.translation()[2]);
-                node.write().unwrap().set_local_translation(Translation3::new(t.0, t.1, t.2));
-                node.write().unwrap().prepend_to_local_rotation(&UnitQuaternion::from_axis_angle(&Vector3::y_axis(), 0.6));
+                node.set_local_translation(Translation3::new(t.0, t.1, t.2));
+                node.prepend_to_local_rotation(&UnitQuaternion::from_axis_angle(&Vector3::y_axis(), 0.6));
                 self.physicsManager.getCollider(colliderComp.getColliderHandle()).set_translation(vector![t.0, t.1, t.2])
             }
             
@@ -503,9 +526,9 @@ impl GameManager{
         self.entityManager.addComponentToObject(tower, AttackDamageComponent::new(*self.gameParameters.get("towerAttackDamage").unwrap()));
         self.entityManager.addComponentToObject(tower, AttackRateComponent::new(*self.gameParameters.get("towerAttackRate").unwrap()));    
 
-        self.createRenderComponent(tower, TypeEnum::towerType, x, y, z, 0.6);
+        let scale = rand::thread_rng().gen_range(0.35..0.7);
+        self.createRenderComponent(tower, TypeEnum::towerType, x, y, z, scale);
     }
-
 
 
     fn spawnEnemy(&mut self){
@@ -518,7 +541,7 @@ impl GameManager{
         let startCoords = self.mapManager.getStart();
         self.createRenderComponent(enemy, TypeEnum::enemyType, startCoords.0, *self.gameParameters.get("enemyHeight").unwrap(), startCoords.1, 0.5);
         self.createRigidBodyAndColliderComponents(enemy, TypeEnum::enemyType,
-                     startCoords.0, *self.gameParameters.get("enemyHeight").unwrap(), startCoords.1, (0.0, 0.0, 0.0), ColliderShape::ball(0.5));
+                     startCoords.0, *self.gameParameters.get("enemyHeight").unwrap(), startCoords.1, (0.0, 0.0, 0.0), ColliderShape::ball(0.3));
     }
 
 
@@ -567,12 +590,20 @@ impl GameManager{
 
         // Add Collider to PhysicsManager and ColliderHandle to ColliderComponent (like an index) with a translation 
         let colliderBuilder = ColliderBuilder::new(colliderShape);
-        let collider = colliderBuilder.sensor(true).active_events(ActiveEvents::COLLISION_EVENTS).build();
+        let mut collider = colliderBuilder.sensor(true).active_events(ActiveEvents::COLLISION_EVENTS);
+
+        if matches!(objectType, TypeEnum::projectileType){
+            collider = collider.collision_groups(InteractionGroups::new(0b0010, 0b0001));
+        }
+
+        else if matches!(objectType, TypeEnum::enemyType){
+            collider = collider.collision_groups(InteractionGroups::new(0b0001, 0b0010));
+        }
+
+        let collider = collider.build();
         let colliderHandle = self.physicsManager.addColliderWithParent(collider, rigidBodyHandle);
         
-        self.entityManager.addComponentToObject(id, ColliderComponent::new(colliderHandle));
-
-        
+        self.entityManager.addComponentToObject(id, ColliderComponent::new(colliderHandle));  
     }
 
     fn createWalls(&mut self){
@@ -588,22 +619,22 @@ impl GameManager{
 
         let mut cube = self.window.add_cube(width as f32+4.0, 5.0, 0.1);
         cube.set_local_translation(Translation3::new(width/2.0-0.5+offset, 2.5, offset-2.0));
-        //cube.set_visible(false);
+        cube.set_visible(false);
         self.entityManager.addComponentToObject(wall1, RenderableComponent::new(cube));
 
         let mut cube = self.window.add_cube(width as f32+4.0, 5.0, 0.1);
         cube.set_local_translation(Translation3::new(width/2.0-0.5+offset, 2.5, height+2.0+offset));
-        //cube.set_visible(false);
+        cube.set_visible(false);
         self.entityManager.addComponentToObject(wall2, RenderableComponent::new(cube));
 
         let mut cube = self.window.add_cube(0.1, 5.0, height+3.8);
         cube.set_local_translation(Translation3::new(offset-2.5, 2.5, height/2.0+offset));
-        //cube.set_visible(false);
+        cube.set_visible(false);
         self.entityManager.addComponentToObject(wall3, RenderableComponent::new(cube));
 
         let mut cube = self.window.add_cube(0.1, 5.0, height+3.8);
         cube.set_local_translation(Translation3::new(width+2.0-0.5+offset, 2.5, height/2.0+offset));
-        //cube.set_visible(false);
+        cube.set_visible(false);
         self.entityManager.addComponentToObject(wall4, RenderableComponent::new(cube));
 
         self.entityManager.addComponentToObject(wall1, TypeComponent::new(TypeEnum::wallType));

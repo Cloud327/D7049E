@@ -1,5 +1,4 @@
-use nalgebra::{Matrix4, Translation3};
-use rapier3d::{prelude::{RigidBody, RigidBodyHandle}, math::Real, prelude::Vector};
+use rapier3d::{prelude::{RigidBodyHandle}};
 
 
 /*  
@@ -26,10 +25,5 @@ impl RigidBodyComponent{
     pub fn getRigidBodyHandle(&self) -> RigidBodyHandle{
         return self.rigidBodyHandle;
     }
-
-    pub fn update(){
-        
-    }
-
 
 }

@@ -10,10 +10,6 @@ impl IdComponent{
         }
     }
 
-    pub fn update(){
-
-    }
-
     pub fn getId(&self) -> usize{
         return self.id
     }

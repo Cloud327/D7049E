@@ -21,10 +21,7 @@ impl MoveComponent{
         }
     }
 
-    pub fn update(&mut self){
-        
-    }
-
+    
     /* Returns the next point to move towards */
     pub fn getNextPoint(&self) -> (f32, f32){
         let point = self.path.front().unwrap();

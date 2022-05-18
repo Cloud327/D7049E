@@ -1,6 +1,5 @@
 pub mod entityManager;
 pub mod eventManager;
-pub mod componentManager;
 pub mod componentVec;
 pub mod eventEnum;
 pub mod typeEnum;
