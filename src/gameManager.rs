@@ -53,12 +53,13 @@ impl GameManager{
             ("baseHealth", 1.0),            // HP of the base
             ("enemyHeight", 1.0),           // Y-coord for where the enemies spawn and fly
             ("towerHeight", 0.25),          // Y-coord for where the towers spawn
-            ("enemySpeed", 4.0),            // How fast the enemies are
+            ("enemySpeed", 3.0),            // How fast the enemies are
             ("projectileSpeed", 14.0),      // How fast the projectiles are
             ("towerAttackRate", 1000.0),    // Milliseconds between each tower attack
             ("finalWave", 20.0),            // Number of enemy waves
             ("currentWave", 0.0),           // Start wave, do not change please
             ("enemySpawnRate", 500.0),      // Milliseconds between enemy spawns within a wave
+            ("printMS", 0.0),               // 0 = Don't print, 1 = Do print simulation time ms
         ]);
         Self {
             entityManager: EntityManager::new(),
@@ -102,8 +103,8 @@ impl GameManager{
 
     pub fn gameloop(&mut self){
 
-        let eye = Point3::new(110.0f32, 10.0, 110.0);
-        let at = Point3::new(100.0f32, 1.0, 100.0);
+        let eye = Point3::new(92.0, 7.0, 104.0);
+        let at = Point3::new(104.0, 1.0, 106.0);
         let mut first_person = FirstPerson::new(eye, at);
 
         let (spawnEnemySender, spawnEnemyReciever) = mpsc::channel();
@@ -214,17 +215,18 @@ impl GameManager{
             }
 
             // Measure the simulation time per update (excluding rendering)
-            match startTime.elapsed() {
-                Ok(elapsed) => {
-                    // it prints '2'
-                    println!("{} ms", elapsed.as_millis());
-                }
-                Err(e) => {
-                    // an error occurred!
-                    println!("Error: {:?}", e);
+            if *self.gameParameters.get("printMS").unwrap() == 1.0{
+                match startTime.elapsed() {
+                    Ok(elapsed) => {
+                        println!("{} ms", elapsed.as_millis());
+                    }
+                    Err(e) => {
+                        // an error occurred!
+                        println!("Error: {:?}", e);
+                    }
                 }
             }
-
+            
             self.window.render_with_camera(&mut first_person);
         }
     }
